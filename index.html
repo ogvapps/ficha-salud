@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-M">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de Salud</title>
+    
+    <!-- Incluye Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Incluye SheetJS (xlsx) para exportar a Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        
+        /* Estilos del formulario de varios pasos */
+        .form-step {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            will-change: opacity;
+        }
+        .form-step.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Estilos de la barra de progreso */
+        .progress-bar-step {
+            transition: all 0.3s ease-in-out;
+        }
+        #progress-line {
+            transition: width 0.3s ease-in-out;
+        }
+
+        /* Estilo para los campos de solo lectura de la cabecera */
+        input[readonly] {
+            background-color: #f1f5f9; /* slate-100 */
+            border-color: #e2e8f0; /* slate-200 */
+            cursor: not-allowed;
+            color: #475569; /* slate-600 */
+        }
+        
+        /* Estilo para el punto de estado en la tabla */
+        .status-dot {
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: middle;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+        }
+        
+        /* Estilos de los botones de filtro */
+        #group-filter-buttons button {
+            transition: all 0.2s ease-in-out;
+        }
+        #group-filter-buttons button.active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+            font-weight: 600;
+        }
+        #group-filter-buttons button:not(.active) {
+            background-color: white;
+            color: #475569; /* slate-600 */
+        }
+        
+        /* Mejoras en radio/checkbox */
+        input[type="radio"], input[type="checkbox"] {
+            transition: all 0.2s ease-in-out;
+        }
+        input[type="radio"]:checked, input[type="checkbox"]:checked {
+            background-color: #4f46e5; /* indigo-600 */
+            border-color: #4f46e5;
+        }
+        
+    </style>
+</head>
+<body class="antialiased">
+    <div class="max-w-4xl mx-auto p-4 sm:p-8">
+        
+        <!-- Cabecera -->
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 mb-8">
+            <h1 id="pageTitle" class="text-3xl font-bold text-center text-indigo-700 mb-6">Ficha de Salud - Centro Educativo</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="schoolName" class="block text-sm font-medium text-slate-700">Nombre del Centro</label>
+                    <input type="text" name="schoolName" id="schoolName" value="Colegio Madre Matilde"
+                           class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-all duration-200" readonly>
+                </div>
+                <div>
+                    <label for="schoolYear" class="block text-sm font-medium text-slate-700">Curso Escolar</label>
+                    <input type="text" name="schoolYear" id="schoolYear" value="2025/2026"
+                           class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-all duration-200" readonly>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de Progreso -->
+        <div class="mb-12">
+            <div class="relative w-full h-1 bg-slate-200 rounded-full">
+                <div id="progress-line" class="absolute top-0 left-0 h-1 bg-indigo-600 rounded-full" style="width: 0%;"></div>
+            </div>
+            <div class="flex justify-between mt-3">
+                <div class="progress-bar-step text-center" data-step="1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm mx-auto bg-indigo-600 text-white">1</div>
+                    <p class="text-xs font-semibold mt-1 text-indigo-600">Alumno/a</p>
+                </div>
+                <div class="progress-bar-step text-center" data-step="2">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm mx-auto bg-slate-200 text-slate-500">2</div>
+                    <p class="text-xs font-semibold mt-1 text-slate-500">Tutores</p>
+                </div>
+                <div class="progress-bar-step text-center" data-step="3">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm mx-auto bg-slate-200 text-slate-500">3</div>
+                    <p class="text-xs font-semibold mt-1 text-slate-500">Info. Médica</p>
+                </div>
+                <div class="progress-bar-step text-center" data-step="4">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm mx-auto bg-slate-200 text-slate-500">4</div>
+                    <p class="text-xs font-semibold mt-1 text-slate-500">Alergias y Cuidados</p>
+                </div>
+                <div class="progress-bar-step text-center" data-step="5">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm mx-auto bg-slate-200 text-slate-500">5</div>
+                    <p class="text-xs font-semibold mt-1 text-slate-500">Finalizar</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario Principal -->
+        <form id="healthForm" class="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200 space-y-8">
+            
+            <!-- Paso 1: Datos Alumno/a -->
+            <fieldset id="step-1" class="form-step active space-y-6">
+                <legend class="text-xl font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-6">1. Datos del Alumno/a</legend>
+                <div>
+                    <label for="student_name" class="block text-sm font-medium text-slate-700">Nombre y Apellidos</label>
+                    <input type="text" name="student_name" id="student_name" required autocomplete="name"
+                           class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="birth_date" class="block text-sm font-medium text-slate-700">Fecha de Nacimiento</label>
+                        <input type="date" name="birth_date" id="birth_date" required
+                               class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="group" class="block text-sm font-medium text-slate-700">Grupo</label>
+                        <select id="group" name="group" required
+                                class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option value="" disabled selected>Seleccione un grupo...</option>
+                            <!-- Infantil -->
+                            <option value="infantil_3a">Infantil 3 Años</option>
+                            <option value="infantil_4a">Infantil 4 Años</option>
+                            <option value="infantil_5a">Infantil 5 Años</option>
+                            <!-- Primaria -->
+                            <option value="primaria_1">Primaria 1º</option>
+                            <option value="primaria_2">Primaria 2º</option>
+                            <option value="primaria_3">Primaria 3º</option>
+                            <option value="primaria_4">Primaria 4º</option>
+                            <option value="primaria_5">Primaria 5º</option>
+                            <option value="primaria_6">Primaria 6º</option>
+                            <!-- ESO -->
+                            <option value="eso_1">ESO 1º</option>
+                            <option value="eso_2">ESO 2º</option>
+                            <option value="eso_3">ESO 3º</option>
+                            <option value="eso_4">ESO 4º</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-slate-700">Correo Electrónico de Contacto</label>
+                    <input type="email" name="email" id="email" required autocomplete="email"
+                           class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+            </fieldset>
+
+            <!-- Paso 2: Datos Tutores -->
+            <fieldset id="step-2" class="form-step space-y-6">
+                <legend class="text-xl font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-6">2. Datos Familiares / Tutores Legales</legend>
+                <div class="p-4 border border-slate-200 rounded-lg">
+                    <h3 class="text-lg font-medium text-slate-800 mb-4">Tutor/a 1</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="guardian1_name" class="block text-sm font-medium text-slate-700">Nombre y Apellidos</label>
+                            <input type="text" name="guardian1_name" id="guardian1_name" required autocomplete="name"
+                                   class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="guardian1_mobile" class="block text-sm font-medium text-slate-700">Teléfono Móvil</label>
+                                <input type="tel" name="guardian1_mobile" id="guardian1_mobile" required autocomplete="tel"
+                                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label for="guardian1_work" class="block text-sm font-medium text-slate-700">Teléfono Trabajo</label>
+                                <input type="tel" name="guardian1_work" id="guardian1_work" autocomplete="tel"
+                                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 border border-slate-200 rounded-lg">
+                    <h3 class="text-lg font-medium text-slate-800 mb-4">Tutor/a 2</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="guardian2_name" class="block text-sm font-medium text-slate-700">Nombre y Apellidos</label>
+                            <input type="text" name="guardian2_name" id="guardian2_name" autocomplete="name"
+                                   class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="guardian2_mobile" class="block text-sm font-medium text-slate-700">Teléfono Móvil</label>
+                                <input type="tel" name="guardian2_mobile" id="guardian2_mobile" autocomplete="tel"
+                                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label for="guardian2_work" class="block text-sm font-medium text-slate-700">Teléfono Trabajo</label>
+                                <input type="tel" name="guardian2_work" id="guardian2_work" autocomplete="tel"
+                                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+            
+            <!-- Paso 3: Salud (Parte 1) -->
+            <fieldset id="step-3" class="form-step space-y-6">
+                <legend class="text-xl font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-6">3. Información de Salud (Parte 1)</legend>
+                <div>
+                    <label for="diseases" class="block text-sm font-medium text-slate-700">Enfermedades que padece (asma, epilepsia, diabetes, etc.)</label>
+                    <input type="text" name="diseases" id="diseases" placeholder="Ninguna"
+                           class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="known_allergies" class="block text-sm font-medium text-slate-700">Alergias conocidas (alimentos, medicamentos, etc.)</label>
+                    <input type="text" name="known_allergies" id="known_allergies" placeholder="Ninguna"
+                           class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="usual_treatment" class="block text-sm font-medium text-slate-700">Tratamiento habitual que recibe</label>
+                    <input type="text" name="usual_treatment" id="usual_treatment" placeholder="Ninguno"
+                           class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="risk_situation" class="block text-sm font-medium text-slate-700">¿Existe alguna situación de riesgo leve que se deba conocer?</label>
+                    <textarea name="risk_situation" id="risk_situation" rows="3"
+                              class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                </div>
+                
+                <fieldset>
+                    <legend class="text-sm font-medium text-slate-700 mb-2">En caso de URGENCIA (prioridad de aviso):</legend>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <input id="notify_emergency" name="notify_emergency" type="checkbox"
+                                   class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="notify_emergency" class="ml-3 block text-sm text-slate-700">Avisar a Urgencias 112</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="notify_parents" name="notify_parents" type="checkbox" checked
+                                   class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="notify_parents" class="ml-3 block text-sm text-slate-700">Avisar a los tutores legales</label>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div>
+                    <label for="recommendations" class="block text-sm font-medium text-slate-700">Otras recomendaciones de interés</label>
+                    <textarea name="recommendations" id="recommendations" rows="3"
+                              class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                </div>
+            </fieldset>
+
+            <!-- Paso 4: Salud (Parte 2) -->
+            <fieldset id="step-4" class="form-step space-y-6">
+                <legend class="text-xl font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-6">4. Información de Salud (Parte 2)</legend>
+                
+                <fieldset>
+                    <legend class="text-sm font-medium text-slate-700">Si tiene alergia, indique el tipo:</legend>
+                    <div class="mt-2 space-y-2">
+                        <div class="flex items-center">
+                            <input id="allergy_pollen" name="allergy_type" type="checkbox" value="pollen"
+                                   class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="allergy_pollen" class="ml-3 block text-sm text-slate-700">Pólenes</label>
+                        </div>
+                        <div id="allergy_pollen_details" class="hidden ml-7 mt-2">
+                            <label for="allergy_pollen_text" class="block text-xs font-medium text-slate-600">Especifique (gramíneas, olivo...)</label>
+                            <input type="text" name="allergy_pollen_text" id="allergy_pollen_text"
+                                   class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs">
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input id="allergy_food" name="allergy_type" type="checkbox" value="food"
+                                   class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="allergy_food" class="ml-3 block text-sm text-slate-700">Alimentos</label>
+                        </div>
+                        <div id="allergy_food_details" class="hidden ml-7 mt-2">
+                            <label for="allergy_food_text" class="block text-xs font-medium text-slate-600">Especifique (frutos secos, lactosa...)</label>
+                            <input type="text" name="allergy_food_text" id="allergy_food_text"
+                                   class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs">
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input id="allergy_meds_check" name="allergy_type" type="checkbox" value="meds"
+                                   class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="allergy_meds_check" class="ml-3 block text-sm text-slate-700">Medicamentos</label>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend class="text-sm font-medium text-slate-700">¿Alergia a medicamentos?</legend>
+                    <div class="flex gap-x-6 mt-2">
+                        <div class="flex items-center">
+                            <input id="allergy_meds_yes" name="allergy_meds_text" type="radio" value="yes" required
+                                   class="h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="allergy_meds_yes" class="ml-2 block text-sm text-slate-700">Sí</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="allergy_meds_no" name="allergy_meds_text" type="radio" value="no" checked
+                                   class="h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="allergy_meds_no" class="ml-2 block text-sm text-slate-700">No</label>
+                        </div>
+                    </div>
+                    <div id="allergy_meds_details_text" class="hidden ml-7 mt-2">
+                        <label for="allergy_medication_text" class="block text-xs font-medium text-slate-600">Especifique (penicilina, ibuprofeno...)</label>
+                        <input type="text" name="allergy_medication_text" id="allergy_medication_text"
+                               class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs">
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend class="text-sm font-medium text-slate-700">Síntomas que presenta (alergia):</legend>
+                    <div class="mt-2 space-y-2">
+                        <div class="flex items-center"><input id="symptom_skin" name="allergy_symptoms" type="checkbox" value="skin" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"><label for="symptom_skin" class="ml-3 block text-sm text-slate-700">Cutáneos (picor, habones)</label></div>
+                        <div class="flex items-center"><input id="symptom_digestive" name="allergy_symptoms" type="checkbox" value="digestive" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"><label for="symptom_digestive" class="ml-3 block text-sm text-slate-700">Digestivos (vómitos, diarrea)</label></div>
+                        <div class="flex items-center"><input id="symptom_respiratory" name="allergy_symptoms" type="checkbox" value="respiratory" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"><label for="symptom_respiratory" class="ml-3 block text-sm text-slate-700">Respiratorios (tos, estornudos, ahogo)</label></div>
+                        <div class="flex items-center"><input id="symptom_anaphylactic" name="allergy_symptoms" type="checkbox" value="anaphylactic_shock" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"><label for="symptom_anaphylactic" class="ml-3 block text-sm text-slate-700">Shock anafiláctico</label></div>
+                        <div class="flex items-center">
+                            <input id="symptom_other" name="allergy_symptoms" type="checkbox" value="other"
+                                   class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="symptom_other" class="ml-3 block text-sm text-slate-700">Otros</label>
+                        </div>
+                        <div id="symptom_other_details" class="hidden ml-7 mt-2">
+                            <label for="allergy_symptoms_other_text" class="block text-xs font-medium text-slate-600">Especifique otros síntomas</label>
+                            <input type="text" name="allergy_symptoms_other_text" id="allergy_symptoms_other_text"
+                                   class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs">
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend class="text-sm font-medium text-slate-700">¿Tratamiento psicológico o psiquiátrico?</legend>
+                    <div class="flex gap-x-6 mt-2">
+                        <div class="flex items-center">
+                            <input id="psych_treatment_yes" name="psych_treatment" type="radio" value="yes" required
+                                   class="h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="psych_treatment_yes" class="ml-2 block text-sm text-slate-700">Sí</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="psych_treatment_no" name="psych_treatment" type="radio" value="no" checked
+                                   class="h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="psych_treatment_no" class="ml-2 block text-sm text-slate-700">No</label>
+                        </div>
+                    </div>
+                    <div id="psych_details" class="hidden mt-2 space-y-4">
+                        <div>
+                            <label for="psych_problem" class="block text-xs font-medium text-slate-600">Problema de aprendizaje / psicológico</label>
+                            <input type="text" name="psych_problem" id="psych_problem"
+                                   class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs">
+                        </div>
+                        <div>
+                            <label for="psych_treatment_details" class="block text-xs font-medium text-slate-600">Especifique tratamiento</label>
+                            <input type="text" name="psych_treatment_details" id="psych_treatment_details"
+                                   class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs">
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend class="text-sm font-medium text-slate-700">¿Necesita cuidados especiales?</legend>
+                    <div class="flex gap-x-6 mt-2">
+                        <div class="flex items-center">
+                            <input id="special_care_yes" name="special_care" type="radio" value="yes" required
+                                   class="h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="special_care_yes" class="ml-2 block text-sm text-slate-700">Sí</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="special_care_no" name="special_care" type="radio" value="no" checked
+                                   class="h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="special_care_no" class="ml-2 block text-sm text-slate-700">No</label>
+                        </div>
+                    </div>
+                    <div id="special_care_details" class="hidden ml-7 mt-2">
+                        <label for="special_care_text" class="block text-xs font-medium text-slate-600">Especifique los cuidados</label>
+                        <textarea name="special_care_text" id="special_care_text" rows="3"
+                                  class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs"></textarea>
+                    </div>
+                </fieldset>
+
+            </fieldset>
+
+            <!-- Paso 5: Autorización y Envío -->
+            <fieldset id="step-5" class="form-step space-y-6">
+                <legend class="text-xl font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-6">5. Autorización y Envío</legend>
+                
+                <div>
+                    <label for="observations" class="block text-sm font-medium text-slate-700">Observaciones adicionales</label>
+                    <textarea name="observations" id="observations" rows="4"
+                              class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                </div>
+                
+                <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <h3 class="text-base font-semibold text-slate-800">Autorización</h3>
+                    <p class="text-sm text-slate-600 mt-2">
+                        Como padre/madre/tutor legal del alumno/a <strong class="school-name-placeholder">[Nombre del Centro]</strong>, autorizo al personal del centro educativo a administrar al alumno/a la medicación prescrita por su médico, en caso de necesidad, siguiendo las pautas indicadas.
+                        Asimismo, autorizo al personal del centro a tomar las medidas necesarias en caso de urgencia médica, incluyendo el traslado al centro de salud u hospital más cercano.
+                    </p>
+                    <fieldset class="mt-4">
+                        <legend class="sr-only">Autorización</legend>
+                        <div class="flex flex-col sm:flex-row sm:gap-x-6">
+                            <div class="flex items-center">
+                                <input id="authorize" name="authorization" type="radio" value="authorize" required
+                                       class="h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                <label for="authorize" class="ml-2 block text-sm font-medium text-slate-700">AUTORIZO</label>
+                            </div>
+                            <div class="flex items-center mt-2 sm:mt-0">
+                                <input id="not_authorize" name="authorization" type="radio" value="not_authorize"
+                                       class="h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                <label for="not_authorize" class="ml-2 block text-sm font-medium text-slate-700">NO AUTORIZO</label>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <div>
+                    <label for="submission_date" class="block text-sm font-medium text-slate-700">Fecha de Cumplimentación</label>
+                    <input type="date" name="submission_date" id="submission_date" required
+                           class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+            </fieldset>
+
+            <!-- Botones de Navegación -->
+            <div class="flex justify-between items-center pt-6 border-t border-slate-200 mt-8">
+                <button type="button" id="prevBtn"
+                        class="hidden items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md shadow-sm text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Anterior
+                </button>
+                <div class="ml-auto"></div> <!-- Empuja los botones siguientes a la derecha -->
+                <button type="button" id="nextBtn"
+                        class="flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    Siguiente
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <button type="submit" id="submitBtn"
+                        class="hidden items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="btn-text">Enviar Ficha</span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Database Section -->
+        <div class="mt-12 pt-8 border-t border-slate-200">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4">Acceso de Administrador</h2>
+            
+            <!-- Admin Login Box -->
+            <div id="admin-login-box" class="max-w-md mx-auto bg-slate-50 p-6 rounded-lg border border-slate-200">
+              <h2 class="text-xl font-semibold text-center text-slate-800 mb-4">Acceso Administrador</h2>
+              <form id="admin-login-form" class="space-y-4">
+                <input type="email" id="admin-email" placeholder="Email admin" required class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                <input type="password" id="admin-password" placeholder="Contraseña" required class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                <button type="submit" class="w-full inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">Entrar</button>
+              </form>
+              <div id="admin-login-error" class="text-red-600 text-sm mt-3 text-center" style="display:none;"></div>
+            </div>
+
+            <div id="dbSection" class="hidden mt-6 bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                    <h3 class="text-xl font-semibold text-slate-800">Base de Datos de Fichas</h3>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button id="exportViewExcelBtn" class="flex items-center px-3 py-1.5 border border-emerald-300 text-sm font-medium rounded-md shadow-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            Exportar Vista
+                        </button>
+                        <button id="exportAllExcelBtn" class="flex items-center px-3 py-1.5 border border-emerald-300 text-sm font-medium rounded-md shadow-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zM4 11a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM15 12a1 1 0 10-2 0v1a1 1 0 102 0v-1zM10 6a1 1 0 011 1v1a1 1 0 11-2 0V7a1 1 0 011-1zM4 6a1 1 0 011 1v1a1 1 0 11-2 0V7a1 1 0 011-1zM15 7a1 1 0 10-2 0v1a1 1 0 102 0V7zM7 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM12 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM17 11a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM7 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zM12 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zM17 6a1 1 0 011 1v1a1 1 0 11-2 0V7a1 1 0 011-1z" /></svg>
+                            Exportar Todo
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filtros -->
+                <div id="group-filter-buttons" class="flex flex-wrap justify-center gap-2 mb-6">
+                    <button data-group="all" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm active">Todos</button>
+                    <!-- Infantil -->
+                    <button data-group="infantil_3a" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Infantil 3 Años</button>
+                    <button data-group="infantil_4a" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Infantil 4 Años</button>
+                    <button data-group="infantil_5a" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Infantil 5 Años</button>
+                    <!-- Primaria -->
+                    <button data-group="primaria_1" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria 1º</button>
+                    <button data-group="primaria_2" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria 2º</button>
+                    <button data-group="primaria_3" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria 3º</button>
+                    <button data-group="primaria_4" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria 4º</button>
+                    <button data-group="primaria_5" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria 5º</button>
+                    <button data-group="primaria_6" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria 6º</button>
+                    <!-- ESO -->
+                    <button data-group="eso_1" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">ESO 1º</button>
+                    <button data-group="eso_2" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">ESO 2º</button>
+                    <button data-group="eso_3" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">ESO 3º</button>
+                    <button data-group="eso_4" class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">ESO 4º</button>
+                </div>
+
+                <!-- Tabla de Datos -->
+                <div class="overflow-x-auto">
+                    <div id="loading" class="text-center p-6 text-slate-500 hidden">Cargando datos...</div>
+                    <p id="no-data" class="text-center p-6 text-slate-500 hidden">No se han encontrado datos.</p>
+                    <table id="dbTable" class="min-w-full divide-y divide-slate-200 hidden">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nombre Alumno/a</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">F. Nacimiento</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Grupo</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">F. Envío</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dbTableBody" class="bg-white divide-y divide-slate-200">
+                            <!-- Filas generadas por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Modal de Envío Exitoso -->
+    <div id="submissionModal" class="fixed inset-0 bg-black/60 flex items-center justify-center hidden z-50 p-4 transition-opacity duration-300">
+        <div class="relative p-6 border w-full max-w-md shadow-lg rounded-xl bg-white text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100">
+                <svg class="h-8 w-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="text-lg leading-6 font-bold text-slate-900 mt-5">¡Enviado con Éxito!</h3>
+            <div class="mt-2"><p class="text-sm text-slate-500">Gracias. La ficha ha sido guardada en la base de datos.</p></div>
+            <div class="mt-6"><button id="closeSubmissionModal" class="w-full px-4 py-2 bg-indigo-600 text-white text-base font-medium rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">Cerrar</button></div>
+        </div>
+    </div>
+    
+    <!-- Modal de Actualización Exitosa -->
+    <div id="updateModal" class="fixed inset-0 bg-black/60 flex items-center justify-center hidden z-50 p-4 transition-opacity duration-300">
+        <div class="relative p-6 border w-full max-w-md shadow-lg rounded-xl bg-white text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100">
+                <svg class="h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.992-3.182m-13.992 0A8.25 8.25 0 019.825 4.5l3.182 3.182m0 0h-4.992m4.992 0v4.992" />
+                </svg>
+            </div>
+            <h3 class="text-lg leading-6 font-bold text-slate-900 mt-5">¡Actualizado con Éxito!</h3>
+            <div class="mt-2"><p class="text-sm text-slate-500">La ficha ha sido actualizada correctamente.</p></div>
+            <div class="mt-6"><button id="closeUpdateModal" class="w-full px-4 py-2 bg-indigo-600 text-white text-base font-medium rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">Cerrar</button></div>
+        </div>
+    </div>
+
+    <!-- Modal de Envío Duplicado -->
+    <div id="alreadySubmittedModal" class="fixed inset-0 bg-black/60 flex items-center justify-center hidden z-50 p-4 transition-opacity duration-300">
+        <div class="relative p-6 border w-full max-w-md shadow-lg rounded-xl bg-white text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-amber-100">
+                <svg class="h-8 w-8 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+            </div>
+            <h3 class="text-lg leading-6 font-bold text-slate-900 mt-5">Formulario Duplicado</h3>
+            <div class="mt-2"><p class="text-sm text-slate-500">Ya se ha enviado una ficha para este alumno/a en este curso escolar.</p></div>
+            <div class="mt-6"><button id="closeAlreadySubmittedModal" class="w-full px-4 py-2 bg-indigo-600 text-white text-base font-medium rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">Entendido</button></div>
+        </div>
+    </div>
+    
+    <!-- Modal de Confirmación de Borrado -->
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-black/60 flex items-center justify-center hidden z-50 p-4 transition-opacity duration-300">
+        <div class="relative p-6 border w-full max-w-md shadow-lg rounded-xl bg-white">
+            <div class="sm:flex sm:items-start">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 class="text-lg leading-6 font-bold text-slate-900">Eliminar Registro</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-slate-500">¿Está seguro de que desea eliminar este registro? Esta acción no se puede deshacer.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse gap-3">
+                <button id="confirmDeleteBtn" type="button" class="inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 sm:w-auto sm:text-sm transition-colors">
+                    Eliminar
+                </button>
+                <button id="cancelDeleteBtn" type="button" class="mt-3 inline-flex w-full justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-base font-medium text-slate-700 shadow-sm hover:bg-slate-50 sm:mt-0 sm:w-auto sm:text-sm transition-colors">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Detalles -->
+    <div id="detailsModal" class="fixed inset-0 bg-black/60 flex items-center justify-center hidden z-50 p-4 transition-opacity duration-300">
+        <div class="relative p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200">
+                <h3 class="text-xl leading-6 font-bold text-slate-900">Detalles de la Ficha</h3>
+                <button id="closeDetailsModalBtn" class="p-1 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="detailsModalBody" class="mt-4 max-h-[70vh] overflow-y-auto pr-2">
+                <!-- Contenido generado por JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Compat SDK Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <footer style="text-align:center; font-size:0.9rem; color:#777; padding:12px 0; margin-top: 2rem;">
+      © 2025 Orestes González Villanueva — Desarrollado con Gemini ·
+      <a href="mailto:ogonzalezv01@educarex.es?subject=Contacto%20App%20Gemini&body=Hola%20Orestes,"
+      	  style="color:inherit; text-decoration:underline;">ogonzalezv01@educarex.es</a>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            
+            // --- Configuración de Firebase ---
+            const userFirebaseConfig = {
+              apiKey: "AIzaSyBTQEwU8Aee2REe3HF6MSs40EkwiWxnei0",
+              authDomain: "cuestionario-salud-colegio.firebaseapp.com",
+              projectId: "cuestionario-salud-colegio",
+              storageBucket: "cuestionario-salud-colegio.firebasestorage.app",
+              messagingSenderId: "349448348069",
+              appId: "1:349448348069:web:5ea6091d56747124fd084c"
+            };
+            
+            const firebaseConfig = userFirebaseConfig;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            
+            // --- Inicialización de Firebase ---
+            const app = firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            firebase.firestore.setLogLevel('debug'); 
+
+            // --- Autenticación Anónima ---
+            try {
+                console.log("Forcing user config. Signing in anonymously...");
+                await auth.signInAnonymously();
+                console.log("Signed in anonymously. User UID:", auth.currentUser?.uid);
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+                document.body.innerHTML = `<div class="p-4 text-center text-red-700 bg-red-100 rounded-md">Error fatal de autenticación de Firebase: ${error.message}. Por favor, recargue la página.</div>`;
+                return;
+            }
+
+            // --- Referencias a Elementos DOM ---
+            const form = document.getElementById('healthForm');
+            const submissionModal = document.getElementById('submissionModal');
+            const closeSubmissionModalBtn = document.getElementById('closeSubmissionModal');
+            const updateModal = document.getElementById('updateModal');
+            const closeUpdateModalBtn = document.getElementById('closeUpdateModal');
+            const alreadySubmittedModal = document.getElementById('alreadySubmittedModal');
+            const closeAlreadySubmittedModalBtn = document.getElementById('closeAlreadySubmittedModal');
+            const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+            const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            const detailsModal = document.getElementById('detailsModal');
+            const detailsModalBody = document.getElementById('detailsModalBody');
+            const closeDetailsModalBtn = document.getElementById('closeDetailsModalBtn');
+            const pageTitle = document.getElementById('pageTitle');
+            const schoolNameInput = document.getElementById('schoolName');
+            const schoolYearInput = document.getElementById('schoolYear');
+            const adminLoginBox = document.getElementById('admin-login-box');
+            const adminLoginForm = document.getElementById('admin-login-form');
+            const adminEmail = document.getElementById('admin-email');
+            const adminPassword = document.getElementById('admin-password');
+            const adminLoginError = document.getElementById('admin-login-error');
+            const dbSection = document.getElementById('dbSection');
+            const dbTable = document.getElementById('dbTable'); 
+            const dbTableBody = document.getElementById('dbTableBody');
+            const loadingDiv = document.getElementById('loading');
+            const noDataP = document.getElementById('no-data');
+            const groupFilterButtons = document.getElementById('group-filter-buttons');
+            const exportViewExcelBtn = document.getElementById('exportViewExcelBtn');
+            const exportAllExcelBtn = document.getElementById('exportAllExcelBtn');
+            const steps = Array.from(document.querySelectorAll('.form-step'));
+            const nextBtn = document.getElementById('nextBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const progressBarSteps = document.querySelectorAll('.progress-bar-step');
+            const progressLine = document.getElementById('progress-line');
+            
+            // Referencias para lógica condicional
+            const allergyPollen = document.getElementById('allergy_pollen');
+            const allergyFood = document.getElementById('allergy_food');
+            const symptomOtherCheck = document.getElementById('symptom_other');
+
+            // --- Variables de Estado ---
+            let currentStep = 1;
+            let currentFilter = 'all';
+            let currentEditDocId = null; // ID del documento que se está editando
+            let unsubscribe = null; // Para la escucha de Firestore
+            
+            // --- Lógica del Formulario por Pasos (Stepper) ---
+            const updateProgressBar = () => {
+                 progressBarSteps.forEach(step => {
+                    const stepNum = parseInt(step.dataset.step, 10);
+                    const circle = step.querySelector('div:first-child');
+                    const text = step.querySelector('p');
+                    if (stepNum < currentStep) {
+                        circle.classList.add('bg-emerald-500');
+                        circle.classList.remove('bg-slate-200', 'text-slate-500', 'bg-indigo-600');
+                        text.classList.add('text-emerald-500');
+                        text.classList.remove('text-slate-500', 'text-indigo-600');
+                    } else if (stepNum === currentStep) {
+                        circle.classList.add('bg-indigo-600');
+                        circle.classList.remove('bg-slate-200', 'text-slate-500', 'bg-emerald-500');
+                        text.classList.add('text-indigo-600');
+                        text.classList.remove('text-slate-500', 'text-emerald-500');
+                    } else {
+                        circle.classList.remove('bg-indigo-600', 'bg-emerald-500');
+                        circle.classList.add('bg-slate-200', 'text-slate-500');
+                        text.classList.remove('text-indigo-600', 'text-emerald-500');
+                        text.classList.add('text-slate-500');
+                    }
+                });
+                const progressPercentage = ((currentStep - 1) / (steps.length - 1)) * 100;
+                progressLine.style.width = `${progressPercentage}%`;
+            };
+
+            const showStep = (stepNumber) => {
+                steps.forEach(step => step.classList.remove('active'));
+                const stepEl = document.getElementById(`step-${stepNumber}`);
+                if (stepEl) stepEl.classList.add('active');
+                currentStep = stepNumber;
+                
+                if(prevBtn) {
+                    prevBtn.classList.toggle('hidden', currentStep === 1);
+                    prevBtn.classList.toggle('flex', currentStep !== 1);
+                }
+                if(nextBtn) {
+                    nextBtn.classList.toggle('hidden', currentStep === steps.length);
+                    nextBtn.classList.toggle('flex', currentStep !== steps.length);
+                }
+                if(submitBtn) {
+                    submitBtn.classList.toggle('hidden', currentStep !== steps.length);
+                    submitBtn.classList.toggle('flex', currentStep === steps.length);
+                }
+                updateProgressBar();
+            };
+
+            const validateStep = (stepNumber) => {
+                const currentStepEl = document.getElementById(`step-${stepNumber}`);
+                if (!currentStepEl) return false;
+                const inputs = currentStepEl.querySelectorAll('input[required], select[required], textarea[required]');
+                let isValid = true;
+                inputs.forEach(input => {
+                    if (input.type === 'radio') {
+                        const radioGroup = document.getElementsByName(input.name);
+                        if (![...radioGroup].some(r => r.checked)) {
+                            const fieldset = input.closest('fieldset');
+                            if (fieldset) fieldset.reportValidity();
+                            else input.reportValidity();
+                            isValid = false;
+                        }
+                    } else if (!input.checkValidity()) {
+                        input.reportValidity();
+                        isValid = false;
+                    }
+                });
+                return isValid;
+            };
+
+            // ===== INICIO DE LA CORRECCIÓN =====
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if (validateStep(currentStep) && currentStep < steps.length) {
+                        showStep(currentStep + 1);
+                    }
+                });
+            }
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    if (currentStep > 1) {
+                        showStep(currentStep - 1);
+                    }
+                });
+            }
+            // ===== FIN DE LA CORRECCIÓN =====
+            showStep(1); // Iniciar en el paso 1
+
+            // --- Lógica de Admin ---
+            if (adminLoginForm) {
+                adminLoginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = adminEmail.value;
+                    const password = adminPassword.value;
+                    if(adminLoginError) adminLoginError.style.display = 'none';
+                    try {
+                        await auth.signInWithEmailAndPassword(email, password);
+                        console.log("Admin signed in successfully");
+                        if(adminLoginBox) adminLoginBox.style.display = 'none'; 
+                        if(dbSection) dbSection.classList.remove('hidden'); 
+                        if(schoolNameInput) schoolNameInput.readOnly = false;
+                        if(schoolYearInput) schoolYearInput.readOnly = false;
+                        loadDatabaseData(currentFilter); 
+                    } catch (error) {
+                        console.error("Admin login failed:", error);
+                        if(adminLoginError) {
+                            adminLoginError.textContent = 'Acceso denegado: ' + error.message;
+                            adminLoginError.style.display = 'block';
+                        }
+                    }
+                });
+            }
+
+            // --- Lógica Dinámica de UI ---
+            const updateSchoolNameDisplay = (newName) => {
+                if(pageTitle) pageTitle.textContent = `Ficha de Salud - ${newName}`;
+                document.querySelectorAll('.school-name-placeholder').forEach(p => p.textContent = newName);
+            };
+            
+            // ===== INICIO DE LA CORRECCIÓN =====
+            if (schoolNameInput) {
+                schoolNameInput.addEventListener('input', (e) => updateSchoolNameDisplay(e.target.value));
+            }
+            // ===== FIN DE LA CORRECCIÓN =====
+            if (schoolNameInput) updateSchoolNameDisplay(schoolNameInput.value); // Llamada inicial
+
+            
+            // --- Lógica Condicional del Formulario ---
+            if (allergyPollen) {
+                allergyPollen.addEventListener('change', (e) => {
+                    const details = document.getElementById('allergy_pollen_details');
+                    if (details) details.classList.toggle('hidden', !e.target.checked);
+                });
+            }
+            if (allergyFood) {
+                allergyFood.addEventListener('change', (e) => {
+                    const details = document.getElementById('allergy_food_details');
+                    if (details) details.classList.toggle('hidden', !e.target.checked);
+                });
+            }
+            if (symptomOtherCheck) {
+                symptomOtherCheck.addEventListener('change', (e) => {
+                    const detailsEl = document.getElementById('symptom_other_details');
+                    if (detailsEl) detailsEl.classList.toggle('hidden', !e.target.checked);
+                });
+            } else {
+                console.error("Error: Elemento 'symptom_other' no encontrado.");
+            }
+            
+            const toggleConditionalField = (radioYes, radioNo, detailsDiv, inputRequired) => {
+                if (!radioYes || !radioNo || !detailsDiv) {
+                    console.error("Error: Faltan elementos para toggleConditionalField. Compruebe los IDs.");
+                    return;
+                }
+                const toggle = () => {
+                    const show = radioYes.checked;
+                    detailsDiv.classList.toggle('hidden', !show);
+                    if (inputRequired) inputRequired.required = show;
+                };
+                // ===== INICIO DE LA CORRECCIÓN =====
+                radioYes.addEventListener('change', toggle);
+                radioNo.addEventListener('change', toggle);
+                // ===== FIN DE LA CORRECCIÓN =====
+            };
+            toggleConditionalField(document.getElementById('allergy_meds_yes'), document.getElementById('allergy_meds_no'), document.getElementById('allergy_meds_details_text'), document.getElementById('allergy_medication_text'));
+            toggleConditionalField(document.getElementById('psych_treatment_yes'), document.getElementById('psych_treatment_no'), document.getElementById('psych_details'), null);
+            toggleConditionalField(document.getElementById('special_care_yes'), document.getElementById('special_care_no'), document.getElementById('special_care_details'), null);
+
+            // --- Lógica de Base de Datos y Envío ---
+            const dbCollectionPath = `/artifacts/${appId}/public/data/health_questionnaires`;
+            const dbCollectionRef = db.collection(dbCollectionPath);
+            console.log(`Using Firestore collection path: ${dbCollectionPath}`);
+            
+            /**
+             * Resetea el formulario a su estado inicial.
+             */
+            function resetFormState() {
+                if(form) form.reset();
+                currentEditDocId = null;
+                if(submitBtn) {
+                    const submitBtnText = submitBtn.querySelector('.btn-text');
+                    if (submitBtnText) submitBtnText.textContent = 'Enviar Ficha';
+                    submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'focus:ring-blue-500');
+                    submitBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'focus:ring-emerald-500');
+                }
+                ['allergy_pollen_details', 'allergy_food_details', 'allergy_meds_details_text', 'symptom_other_details', 'psych_details', 'special_care_details'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.add('hidden');
+                });
+                showStep(1);
+            }
+
+            /**
+             * Manejador del envío del formulario (Crear o Actualizar).
+             */
+            // ===== INICIO DE LA CORRECCIÓN =====
+            if (form) {
+                form.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    if (!validateStep(steps.length)) return;
+
+                    // Recolectar datos del formulario
+                    const formData = new FormData(form);
+                    const data = {};
+                    for (let [key, value] of formData.entries()) {
+                        if (data[key]) {
+                            if (!Array.isArray(data[key])) data[key] = [data[key]];
+                            data[key].push(value);
+                        } else {
+                            data[key] = value;
+                        }
+                    }
+                    if(schoolYearInput) data.school_year = schoolYearInput.value;
+                    if(schoolNameInput) data.school_name = schoolNameInput.value;
+                    if(form.student_name) data.student_name_lower = form.student_name.value.trim().toLowerCase();
+
+                    if (currentEditDocId) {
+                        // --- MODO ACTUALIZACIÓN ---
+                        console.log(`Updating data for doc: ${currentEditDocId}`, data);
+                        try {
+                            await db.collection(dbCollectionPath).doc(currentEditDocId).set(data, { merge: true });
+                            console.log("Document successfully updated!");
+                            if(updateModal) updateModal.classList.remove('hidden');
+                        } catch (error) {
+                            console.error("Error updating document: ", error);
+                        }
+                    } else {
+                        // --- MODO CREACIÓN ---
+                        const studentName = data.student_name_lower;
+                        const birthDate = form.birth_date.value;
+                        const currentSchoolYear = data.school_year;
+                        
+                        // Comprobar duplicados
+                        console.log(`Checking for existing entry: ${studentName}, ${birthDate}, ${currentSchoolYear}`);
+                        const q = dbCollectionRef
+                            .where("student_name_lower", "==", studentName) 
+                            .where("birth_date", "==", birthDate)
+                            .where("school_year", "==", currentSchoolYear);
+                        
+                        try {
+                            const querySnapshot = await q.get();
+                            if (!querySnapshot.empty) {
+                                console.warn("Duplicate entry found. Showing modal.");
+                                if(alreadySubmittedModal) alreadySubmittedModal.classList.remove('hidden');
+                                return;
+                            }
+                        } catch (error) {
+                            console.error("Error checking for existing document: ", error);
+                        }
+
+                        // Añadir nuevo documento
+                        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                        console.log("Submitting new data:", data);
+                        try {
+                            const docRef = await dbCollectionRef.add(data);
+                            console.log("Document written with ID: ", docRef.id);
+                            if(submissionModal) submissionModal.classList.remove('hidden');
+                        } catch (error) {
+                            console.error("Error adding document: ", error);
+                        }
+                    }
+                });
+            }
+            // ===== FIN DE LA CORRECCIÓN =====
+
+            // --- Lógica de Modales y Borrado ---
+            // ===== INICIO DE LA CORRECCIÓN =====
+            if (closeSubmissionModalBtn) {
+                closeSubmissionModalBtn.addEventListener('click', () => {
+                    if(submissionModal) submissionModal.classList.add('hidden');
+                    resetFormState();
+                });
+            }
+            if (closeUpdateModalBtn) {
+                closeUpdateModalBtn.addEventListener('click', () => {
+                    if(updateModal) updateModal.classList.add('hidden');
+                    resetFormState();
+                });
+            }
+            if (closeAlreadySubmittedModalBtn) {
+                closeAlreadySubmittedModalBtn.addEventListener('click', () => {
+                    if(alreadySubmittedModal) alreadySubmittedModal.classList.add('hidden');
+                });
+            }
+            if (cancelDeleteBtn) {
+                cancelDeleteBtn.addEventListener('click', () => {
+                    if(deleteConfirmModal) deleteConfirmModal.classList.add('hidden');
+                });
+            }
+            if (closeDetailsModalBtn) {
+                closeDetailsModalBtn.addEventListener('click', () => {
+                    if(detailsModal) detailsModal.classList.add('hidden');
+                });
+            }
+            
+            let docIdToDelete = null;
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', async () => {
+                    if (docIdToDelete) {
+                        console.log(`Attempting to delete doc: ${docIdToDelete}`);
+                        try {
+                            await db.collection(dbCollectionPath).doc(docIdToDelete).delete();
+                            console.log("Document successfully deleted!");
+                        } catch (error) {
+                            console.error("Error removing document: ", error);
+                        } finally {
+                            docIdToDelete = null;
+                            if(deleteConfirmModal) deleteConfirmModal.classList.add('hidden');
+                        }
+                    }
+                });
+            }
+            // ===== FIN DE LA CORRECCIÓN =====
+            function setupDeleteListener(docId) {
+                docIdToDelete = docId;
+                if(deleteConfirmModal) deleteConfirmModal.classList.remove('hidden');
+            }
+
+            // --- Traducciones y Formato de Datos ---
+            const translations = { 
+                'student_name': 'Nombre del Alumno/a', 
+                'birth_date': 'Fecha de Nacimiento', 
+                'group': 'Grupo', 
+                'email': 'Correo Electrónico', 
+                'school_name': 'Nombre del Centro', 
+                'school_year': 'Curso Escolar', 
+                'guardian1_name': 'Tutor/a 1: Nombre', 
+                'guardian1_mobile': 'Tutor/a 1: Móvil', 
+                'guardian1_work': 'Tutor/a 1: Trabajo', 
+                'guardian2_name': 'Tutor/a 2: Nombre', 
+                'guardian2_mobile': 'Tutor/a 2: Móvil', 
+                'guardian2_work': 'Tutor/a 2: Trabajo', 
+                'diseases': 'Enfermedades', 
+                'known_allergies': 'Alergias Conocidas (General)', 
+                'usual_treatment': 'Tratamiento Habitual', 
+                'risk_situation': 'Situación de Riesgo Leve', 
+                'notify_emergency': 'Avisar 112', 
+                'notify_parents': 'Avisar Tutores', 
+                'recommendations': 'Recomendaciones', 
+                'allergy_type': 'Tipos de Alergia', 
+                'allergy_pollen_text': 'Detalle Alergia Pólenes', 
+                'allergy_food_text': 'Detalle Alergia Alimentos', 
+                'allergy_meds_text': 'Alergia a Medicamentos (Sí/No)', 
+                'allergy_medication_text': 'Detalle Alergia Medicamentos', 
+                'allergy_symptoms': 'Síntomas de Alergia', 
+                'allergy_symptoms_other_text': 'Otros Síntomas de Alergia', 
+                'psych_treatment': 'Tratamiento Psicológico', 
+                'psych_problem': 'Problema Psicológico/Aprendizaje', 
+                'psych_treatment_details': 'Detalles Tratamiento Psicológico', 
+                'special_care': 'Necesita Cuidados Especiales', 
+                'special_care_text': 'Detalles Cuidados Especiales', 
+                'observations': 'Observaciones Adicionales', 
+                'authorization': 'Autorización', 
+                'submission_date': 'Fecha de Cumplimentación' 
+            };
+
+            /**
+             * Determina el estado de salud (color) basado en los datos.
+             * @param {Object} data - Los datos de la ficha.
+             * @returns {Object} Objeto con color, nombre y razón.
+             */
+            function getHealthStatus(data) {
+                 if (!data) return { color: '#22c55e', name: 'Verde', reason: 'No se reportan condiciones significativas.' };
+                 const isRed = (data.risk_situation && data.risk_situation.trim() !== '') || data.special_care === 'yes' || (data.allergy_symptoms && Array.isArray(data.allergy_symptoms) && data.allergy_symptoms.includes('anaphylactic_shock')) || (data.allergy_food_text && data.allergy_food_text.trim() !== '') || (data.allergy_meds_text === 'yes') || (data.diseases && (data.diseases.toLowerCase().includes('diabetes') || data.diseases.toLowerCase().includes('epilepsia') || data.diseases.toLowerCase().includes('asma grave')));
+                 const isYellow = (data.known_allergies && data.known_allergies.trim() !== '' && data.known_allergies.toLowerCase() !== 'ninguna') || data.psych_treatment === 'yes' || (data.diseases && data.diseases.toLowerCase().trim() !== 'ninguna' && data.diseases.trim() !== '') || data.allergy_pollen_text || (data.allergy_symptoms && data.allergy_symptoms.length > 0);
+                 if (isRed) return { color: '#ef4444', name: 'Rojo', reason: 'Presenta condiciones de alto riesgo o cuidados especiales.' };
+                 if (isYellow) return { color: '#f59e0b', name: 'Amarillo', reason: 'Presenta condiciones que requieren atención.' };
+                 return { color: '#22c55e', name: 'Verde', reason: 'No se reportan condiciones significativas.' };
+            }
+            
+            /**
+             * Muestra los detalles de una ficha en un modal.
+             * @param {string} docId - El ID del documento a mostrar.
+             */
+            async function showDetails(docId) {
+                console.log(`Fetching details for doc: ${docId}`);
+                try {
+                    const docSnap = await db.collection(dbCollectionPath).doc(docId).get();
+                    if (docSnap.exists) {
+                        const data = docSnap.data();
+                        let html = '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">';
+                        for (const key in translations) {
+                            if (Object.hasOwnProperty.call(data, key)) {
+                                 let value = data[key] || 'No especificado';
+                                 if(Array.isArray(value)) value = value.join(', ');
+                                 if (value === 'on') value = 'Sí'; else if (value === 'authorize') value = 'AUTORIZO'; else if (value === 'not_authorize') value = 'NO AUTORIZO'; else if (value === 'yes') value = 'Sí'; else if (value === 'no') value = 'No';
+                                html += `<div class="p-3 bg-slate-50 rounded-lg break-words"><dt class="font-semibold text-slate-800">${translations[key] || key}</dt><dd class="text-slate-600">${value}</dd></div>`;
+                            }
+                        }
+                        html += '</dl>';
+                        if(detailsModalBody) detailsModalBody.innerHTML = html;
+                        if(detailsModal) detailsModal.classList.remove('hidden');
+                    } else {
+                        console.log("No such document!");
+                    }
+                } catch (error) { console.error("Error fetching details: ", error); }
+            }
+            
+            /**
+             * Carga los datos de una ficha en el formulario principal para edición.
+             * @param {string} docId - El ID del documento a editar.
+             */
+            async function loadDataIntoForm(docId) {
+                console.log(`Loading doc ${docId} into form for editing.`);
+                try {
+                    const docSnap = await db.collection(dbCollectionPath).doc(docId).get();
+                    if (!docSnap.exists) {
+                        console.error("Document not found!");
+                        return;
+                    }
+                    if(!form) return;
+
+                    const data = docSnap.data();
+                    form.reset(); 
+                    
+                    // Poblar campos de texto, fecha, select
+                    form.student_name.value = data.student_name || '';
+                    form.birth_date.value = data.birth_date || '';
+                    form.group.value = data.group || '';
+                    form.email.value = data.email || '';
+                    form.guardian1_name.value = data.guardian1_name || '';
+                    form.guardian1_mobile.value = data.guardian1_mobile || '';
+                    form.guardian1_work.value = data.guardian1_work || '';
+                    form.guardian2_name.value = data.guardian2_name || '';
+                    form.guardian2_mobile.value = data.guardian2_mobile || '';
+                    form.guardian2_work.value = data.guardian2_work || '';
+                    form.diseases.value = data.diseases || '';
+                    form.known_allergies.value = data.known_allergies || '';
+                    form.usual_treatment.value = data.usual_treatment || '';
+                    form.risk_situation.value = data.risk_situation || '';
+                    form.recommendations.value = data.recommendations || '';
+                    form.allergy_pollen_text.value = data.allergy_pollen_text || '';
+                    form.allergy_food_text.value = data.allergy_food_text || '';
+                    form.allergy_medication_text.value = data.allergy_medication_text || '';
+                    form.allergy_symptoms_other_text.value = data.allergy_symptoms_other_text || '';
+                    form.psych_problem.value = data.psych_problem || '';
+                    form.psych_treatment_details.value = data.psych_treatment_details || '';
+                    form.special_care_text.value = data.special_care_text || '';
+                    form.observations.value = data.observations || '';
+                    form.submission_date.value = data.submission_date || '';
+
+                    // Poblar checkboxes individuales
+                    form.notify_emergency.checked = data.notify_emergency === 'on';
+                    form.notify_parents.checked = data.notify_parents === 'on';
+
+                    // Poblar grupos de checkboxes (asegurando que sea un array)
+                    const allergyTypes = Array.isArray(data.allergy_type) ? data.allergy_type : (data.allergy_type ? [data.allergy_type] : []);
+                    form.allergy_pollen.checked = allergyTypes.includes('pollen');
+                    form.allergy_food.checked = allergyTypes.includes('food');
+                    form.allergy_meds_check.checked = allergyTypes.includes('meds');
+                    
+                    const symptoms = Array.isArray(data.allergy_symptoms) ? data.allergy_symptoms : (data.allergy_symptoms ? [data.allergy_symptoms] : []);
+                    form.symptom_skin.checked = symptoms.includes('skin');
+                    form.symptom_digestive.checked = symptoms.includes('digestive');
+                    form.symptom_respiratory.checked = symptoms.includes('respiratory');
+                    form.symptom_anaphylactic.checked = symptoms.includes('anaphylactic_shock');
+                    form.symptom_other.checked = symptoms.includes('other');
+
+                    // Poblar grupos de radio
+                    form.allergy_meds_text.value = data.allergy_meds_text || 'no';
+                    form.psych_treatment.value = data.psych_treatment || 'no';
+                    form.special_care.value = data.special_care || 'no';
+                    form.authorization.value = data.authorization || 'not_authorize';
+
+                    // Reactivar UI condicional
+                    document.getElementById('allergy_pollen_details')?.classList.toggle('hidden', !form.allergy_pollen.checked);
+                    document.getElementById('allergy_food_details')?.classList.toggle('hidden', !form.allergy_food.checked);
+                    document.getElementById('symptom_other_details')?.classList.toggle('hidden', !form.symptom_other.checked);
+                    document.getElementById('allergy_meds_details_text')?.classList.toggle('hidden', form.allergy_meds_text.value !== 'yes');
+                    document.getElementById('psych_details')?.classList.toggle('hidden', form.psych_treatment.value !== 'yes');
+                    document.getElementById('special_care_details')?.classList.toggle('hidden', form.special_care.value !== 'yes');
+
+                    // Establecer estado de edición
+                    currentEditDocId = docId;
+                    if(submitBtn) {
+                        const submitBtnText = submitBtn.querySelector('.btn-text');
+                        if (submitBtnText) submitBtnText.textContent = 'Actualizar Ficha';
+                        submitBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700', 'focus:ring-emerald-500');
+                        submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'focus:ring-blue-500');
+                    }
+                    
+                    showStep(1); // Ir al paso 1
+                    window.scrollTo({ top: form.offsetTop - 30, behavior: 'smooth' }); 
+
+                } catch (error) {
+                    console.error("Error loading document for edit: ", error);
+                }
+            }
+
+            // --- Lógica de Exportación a Excel ---
+           
+           /**
+            * Formatea los datos de un documento de Firestore para el Excel, usando el mapa 'translations'.
+            * @param {firebase.firestore.DocumentSnapshot} docSnap - El snapshot del documento.
+            * @returns {Object} Un objeto plano con cabeceras traducidas.
+            */
+           function formatDataForExcel(docSnap) {
+                const data = docSnap.data();
+                const formattedData = { 'Estado': getHealthStatus(data).name }; // Empezar con el Estado
+                for (const key in translations) {
+                    let value = data[key] || '';
+                    if (Array.isArray(value)) value = value.join(', ');
+                    if (value === 'on') value = 'Sí';
+                    else if (value === 'authorize') value = 'AUTORIZO';
+                    else if (value === 'not_authorize') value = 'NO AUTORIZO';
+                    else if (value === 'yes') value = 'Sí';
+                    else if (value === 'no') value = 'No';
+                    const translatedKey = translations[key];
+                    formattedData[translatedKey] = value;
+                }
+                return formattedData;
+            }
+
+            /**
+             * Genera y descarga un archivo Excel con múltiples hojas.
+             * @param {Object} sheetsData - Un objeto donde la clave es el nombre de la hoja y el valor es un array de datos (objetos).
+             * @param {string} fileName - El nombre del archivo a descargar.
+             */
+           function generateAndDownloadExcel(sheetsData, fileName) {
+                const wb = XLSX.utils.book_new();
+                const headerStyle = { font: { bold: true }, fill: { fgColor: { rgb: "E9E9E9" } }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
+                const fills = { Rojo: { fgColor: { rgb: "FFC7CE" } }, Amarillo: { fgColor: { rgb: "FFEB9C" } }, Verde: { fgColor: { rgb: "C6EFCE" } } };
+                
+                const headers = ['Estado', ...Object.values(translations)]; // Cabeceras ordenadas
+
+                for (const sheetName in sheetsData) {
+                    if (sheetsData[sheetName].length === 0) continue;
+                    
+                    const ws = XLSX.utils.json_to_sheet(sheetsData[sheetName], { header: headers });
+                    ws['!cols'] = headers.map(() => ({ wch: 25 })); 
+                    const range = XLSX.utils.decode_range(ws['!ref']);
+
+                    // Estilo de cabecera
+                    for (let C = range.s.c; C <= range.e.c; ++C) {
+                        const cell_ref = XLSX.utils.encode_cell({ c: C, r: 0 });
+                        if (ws[cell_ref]) ws[cell_ref].s = headerStyle;
+                    }
+                    
+                    // Estilo de filas de datos
+                    for (let R = 1; R <= range.e.r; ++R) {
+                        const statusCellRef = XLSX.utils.encode_cell({c: 0, r: R}); // Estado siempre es col 0
+                        const status = ws[statusCellRef]?.v;
+                        const rowFill = fills[status] || null;
+                        for (let C = range.s.c; C <= range.e.c; ++C) {
+                            const cell_ref = XLSX.utils.encode_cell({ c: C, r: R });
+                            if (!ws[cell_ref]) ws[cell_ref] = { t: 's', v: '' }; 
+                            ws[cell_ref].s = { border: headerStyle.border, fill: rowFill };
+                        }
+                    }
+                    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                }
+                
+                if (wb.SheetNames.length > 0) {
+                    XLSX.writeFile(wb, fileName);
+                } else {
+                    if(detailsModalBody) detailsModalBody.innerHTML = '<p class="text-center">No hay datos para exportar.</p>';
+                    if(detailsModal) detailsModal.classList.remove('hidden');
+                }
+            }
+
+            // --- Lógica de Carga de Datos y Tabla ---
+            
+            /**
+             * Carga los datos de Firestore en la tabla de admin, aplicando filtros.
+             * @param {string} group - El grupo a filtrar ("all" para todos).
+             */
+            function loadDatabaseData(group) {
+                console.log(`Loading data for group: ${group}`);
+                currentFilter = group;
+                if(loadingDiv) loadingDiv.classList.remove('hidden');
+                if(dbTable) dbTable.classList.add('hidden'); 
+                if(noDataP) noDataP.classList.add('hidden');
+                
+                if (unsubscribe) {
+                    console.log("Unsubscribing from previous listener.");
+                    unsubscribe(); // Detener la escucha anterior
+                }
+                
+                let q = group === 'all' 
+                    ? dbCollectionRef
+                    : dbCollectionRef.where("group", "==", group);
+                    
+                // Escuchar cambios en tiempo real
+                unsubscribe = q.onSnapshot((snapshot) => {
+                    console.log(`Received snapshot. Empty: ${snapshot.empty}. Size: ${snapshot.size}`);
+                    if(loadingDiv) loadingDiv.classList.add('hidden');
+                    if (snapshot.empty) {
+                        if(noDataP) noDataP.classList.remove('hidden');
+                        if(dbTable) dbTable.classList.add('hidden'); 
+                        if(dbTableBody) dbTableBody.innerHTML = '';
+                        return;
+                    }
+                    if(dbTable) dbTable.classList.remove('hidden'); 
+                    if(noDataP) noDataP.classList.add('hidden');
+                    if(dbTableBody) dbTableBody.innerHTML = ''; 
+                    
+                    // Ordenar por fecha de creación (los más nuevos primero)
+                    const docs = snapshot.docs.slice().sort((a, b) => {
+                        const timeA = a.data().createdAt?.seconds || 0;
+                        const timeB = b.data().createdAt?.seconds || 0;
+                        return timeB - timeA;
+                    });
+                        
+                    docs.forEach(docSnap => {
+                        const data = docSnap.data();
+                        const status = getHealthStatus(data);
+                        const row = document.createElement('tr');
+
+                        // Aplicar color de fondo según el estado
+                        if (status.name === 'Rojo') {
+                            row.className = 'bg-red-50 hover:bg-red-100 transition-colors';
+                        } else if (status.name === 'Amarillo') {
+                            row.className = 'bg-amber-50 hover:bg-amber-100 transition-colors';
+                        } else {
+                            row.className = 'hover:bg-slate-50 transition-colors';
+                        }
+                        
+                        row.dataset.docId = docSnap.id;
+                        
+                        // Generar HTML de la fila
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap"><span class="status-dot" style="background-color: ${status.color};" title="${status.reason}"></span></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${data.student_name||''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${data.birth_date||''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">${data.group?data.group.replace(/_/g,' '):''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${data.submission_date||''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center space-x-3">
+                                <button class="text-indigo-600 hover:text-indigo-900 view-btn p-1 rounded-md hover:bg-indigo-100" title="Ver Detalles">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
+                                </button>
+                                <button class="text-blue-600 hover:text-blue-900 edit-btn p-1 rounded-md hover:bg-blue-100" title="Editar">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                                </button>
+                                <button class="text-red-600 hover:text-red-900 delete-btn p-1 rounded-md hover:bg-red-100" title="Eliminar">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                                </button>
+                            </td>`;
+                        
+                        if(dbTableBody) dbTableBody.appendChild(row);
+                    });
+                }, (error) => { 
+                    console.error("Error fetching data:", error); 
+                    if(loadingDiv) loadingDiv.textContent = "Error al cargar los datos. Compruebe la consola para más detalles."; 
+                    if(noDataP) {
+                        noDataP.classList.remove('hidden');
+                        noDataP.textContent = `Error: ${error.message}`;
+                    }
+                });
+            }
+            
+            // --- Event Listeners Globales ---
+            
+            // Delegación de eventos para los botones de la tabla
+            // ===== INICIO DE LA CORRECCIÓN =====
+            if (dbTableBody) {
+                dbTableBody.addEventListener('click', (e) => {
+                    const button = e.target.closest('button');
+                    if (!button) return;
+                    const row = button.closest('tr');
+                    if (!row) return;
+                    const docId = row.dataset.docId;
+                    if (!docId) return;
+                    
+                    if (button.classList.contains('delete-btn')) {
+                        setupDeleteListener(docId);
+                    } else if (button.classList.contains('view-btn')) {
+                        showDetails(docId);
+                    } else if (button.classList.contains('edit-btn')) {
+                        loadDataIntoForm(docId);
+                    }
+                });
+            }
+            
+            // Event listener para los botones de filtro de grupo
+            if (groupFilterButtons) {
+                groupFilterButtons.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        const activeButton = groupFilterButtons.querySelector('.active');
+                        if (activeButton) activeButton.classList.remove('active');
+                        e.target.classList.add('active');
+                        loadDatabaseData(e.target.dataset.group);
+                    }
+                });
+            }
+            // ===== FIN DE LA CORRECCIÓN =====
+
+            /**
+             * Inicia la exportación de datos a Excel.
+             * @param {boolean} all - Si es true, exporta todos los cursos. Si es false, exporta la vista actual.
+             */
+            const exportData = async (all = false) => {
+                console.log(`Exporting data. All: ${all}`);
+                if (!schoolNameInput || !schoolYearInput || !groupFilterButtons || !dbTableBody) {
+                    console.error("Faltan elementos DOM para exportar.");
+                    return;
+                }
+                
+                if (all) {
+                    // --- Exportar Todo ---
+                    try {
+                        const querySnapshot = await dbCollectionRef.get();
+                        if (querySnapshot.empty) {
+                             console.log("No data to export.");
+                             if(detailsModalBody) detailsModalBody.innerHTML = '<p class="text-center">No hay datos para exportar.</p>';
+                             if(detailsModal) detailsModal.classList.remove('hidden');
+                             return;
+                        }
+                        const sheets = {};
+                        const groupButtons = [...groupFilterButtons.querySelectorAll('button')].filter(b => b.dataset.group !== 'all');
+                        groupButtons.forEach(button => sheets[button.textContent] = []); // Preparar hojas por nombre
+                        
+                        querySnapshot.forEach(docSnap => {
+                            const groupKey = docSnap.data().group;
+                            const button = groupButtons.find(b => b.dataset.group === groupKey);
+                            const groupName = button ? button.textContent : 'Sin Grupo';
+                            if (!sheets[groupName]) sheets[groupName] = [];
+                            sheets[groupName].push(formatDataForExcel(docSnap));
+                        });
+                        
+                        const schoolName = schoolNameInput.value.replace(/ /g, '_');
+                        generateAndDownloadExcel(sheets, `FichasSalud_${schoolName}_TodosLosCursos_${schoolYearInput.value.replace('/', '-')}.xlsx`);
+                    } catch (error) {
+                        console.error("Error exporting all data: ", error);
+                        if(detailsModalBody) detailsModalBody.innerHTML = `<p class="text-center text-red-600">Error al exportar todos los datos: ${error.message}</p>`;
+                        if(detailsModal) detailsModal.classList.remove('hidden');
+                    }
+                } else {
+                    // --- Exportar Vista Actual ---
+                     const rows = dbTableBody.querySelectorAll('tr');
+                     if (rows.length === 0) {
+                        console.log("No data in current view to export.");
+                        if(detailsModalBody) detailsModalBody.innerHTML = '<p class="text-center">No hay datos en la vista actual para exportar.</p>';
+                        if(detailsModal) detailsModal.classList.remove('hidden');
+                        return;
+                     }
+                     try {
+                         const docsData = await Promise.all(Array.from(rows).map(row => 
+                            db.collection(dbCollectionPath).doc(row.dataset.docId).get().then(docSnap => docSnap.exists ? formatDataForExcel(docSnap) : null)
+                         ));
+                         const activeButton = groupFilterButtons.querySelector('.active');
+                         const sheetName = activeButton ? activeButton.textContent : 'VistaActual';
+                         const schoolName = schoolNameInput.value.replace(/ /g, '_');
+                         generateAndDownloadExcel({ [sheetName]: docsData.filter(d => d) }, `FichasSalud_${schoolName}_${sheetName.replace(/ /g, '_')}.xlsx`);
+                     } catch (error) {
+                        console.error("Error exporting view data: ", error);
+                        if(detailsModalBody) detailsModalBody.innerHTML = `<p class="text-center text-red-600">Error al exportar la vista actual: ${error.message}</p>`;
+                        if(detailsModal) detailsModal.classList.remove('hidden');
+                     }
+                }
+            };
+            
+            // ===== INICIO DE LA CORRECCIÓN =====
+            if (exportViewExcelBtn) {
+                exportViewExcelBtn.addEventListener('click', () => exportData(false));
+            }
+            if (exportAllExcelBtn) {
+                exportAllExcelBtn.addEventListener('click', () => exportData(true));
+            }
+            // ===== FIN DE LA CORRECCIÓN =====
+
+        }); 
+    </script>
+</body>
+</html>
