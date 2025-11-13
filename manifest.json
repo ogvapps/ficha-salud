@@ -1,0 +1,24 @@
+{
+  "name": "Ficha de Salud - Madre Matilde",
+  "short_name": "Ficha Salud",
+  "description": "Gestión de cuestionarios de salud para el colegio",
+  "start_url": "/ficha-salud/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#DC2626",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
