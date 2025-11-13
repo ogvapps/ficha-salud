@@ -1,0 +1,21 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo blanco del folio -->
+  <rect x="64" y="32" width="384" height="448" fill="#ffffff" stroke="#e5e7eb" stroke-width="4" rx="8"/>
+  
+  <!-- Esquina doblada (triángulo gris) -->
+  <path d="M 384 32 L 448 96 L 384 96 Z" fill="#d1d5db"/>
+  <path d="M 384 32 L 448 96 L 384 96 Z" fill="none" stroke="#9ca3af" stroke-width="2"/>
+  
+  <!-- Línea de doblez -->
+  <line x1="384" y1="96" x2="448" y2="96" stroke="#9ca3af" stroke-width="2"/>
+  <line x1="384" y1="32" x2="384" y2="96" stroke="#9ca3af" stroke-width="2"/>
+  
+  <!-- Cruz roja (horizontal) -->
+  <rect x="192" y="224" width="128" height="32" fill="#DC2626" rx="4"/>
+  
+  <!-- Cruz roja (vertical) -->
+  <rect x="240" y="176" width="32" height="128" fill="#DC2626" rx="4"/>
+  
+  <!-- Sombra sutil del folio -->
+  <rect x="64" y="32" width="384" height="448" fill="none" stroke="#9ca3af" stroke-width="2" rx="8"/>
+</svg>
