@@ -130,6 +130,18 @@
                         readonly>
                 </div>
             </div>
+            <!-- Botón exclusivo para administradores para guardar configuración escolar -->
+            <div id="admin-school-save-container" class="hidden mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                <span class="text-xs text-slate-500 flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Puedes editar el Centro y Curso escolar. Haz clic en guardar para aplicar los cambios a toda la aplicación.
+                </span>
+                <button id="saveSchoolConfigBtn" type="button"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <span>Guardar Centro y Curso</span>
+                </button>
+            </div>
         </div>
 
         <!-- Barra de Progreso -->
@@ -618,6 +630,13 @@
                             </svg>
                             Exportar Todo
                         </button>
+                        <button id="generateSamplesBtn"
+                            class="flex items-center px-3 py-1.5 border border-indigo-300 text-sm font-medium rounded-md shadow-sm text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Crear 5 Fichas de Prueba
+                        </button>
                     </div>
                 </div>
 
@@ -1024,6 +1043,8 @@
             const pageTitle = document.getElementById('pageTitle');
             const schoolNameInput = document.getElementById('schoolName');
             const schoolYearInput = document.getElementById('schoolYear');
+            const saveSchoolConfigBtn = document.getElementById('saveSchoolConfigBtn');
+            const adminSchoolSaveContainer = document.getElementById('admin-school-save-container');
             const adminLoginBox = document.getElementById('admin-login-box');
             const adminLoginForm = document.getElementById('admin-login-form');
             const adminEmail = document.getElementById('admin-email');
@@ -1143,6 +1164,45 @@
             // ===== FIN DE LA CORRECCIÓN =====
             showStep(1); // Iniciar en el paso 1
 
+            // --- Persistencia y Carga de Configuración Escolar (Centro y Curso) ---
+            const SCHOOL_CONFIG_STORAGE_KEY = 'ficha_salud_school_config';
+
+            // Cargar configuración guardada (de LocalStorage primero para respuesta inmediata)
+            const savedLocalConfig = localStorage.getItem(SCHOOL_CONFIG_STORAGE_KEY);
+            if (savedLocalConfig) {
+                try {
+                    const parsedConfig = JSON.parse(savedLocalConfig);
+                    if (parsedConfig.schoolName && schoolNameInput) schoolNameInput.value = parsedConfig.schoolName;
+                    if (parsedConfig.schoolYear && schoolYearInput) schoolYearInput.value = parsedConfig.schoolYear;
+                } catch (e) {
+                    console.error("Error al parsear config escolar local:", e);
+                }
+            }
+
+            // Función para cargar configuración desde Firestore
+            async function loadSchoolConfigFromFirestore() {
+                try {
+                    const configDoc = await db.collection('app_settings').doc('school_config').get();
+                    if (configDoc.exists) {
+                        const data = configDoc.data();
+                        if (data.schoolName && schoolNameInput) {
+                            schoolNameInput.value = data.schoolName;
+                            updateSchoolNameDisplay(data.schoolName);
+                        }
+                        if (data.schoolYear && schoolYearInput) {
+                            schoolYearInput.value = data.schoolYear;
+                        }
+                        localStorage.setItem(SCHOOL_CONFIG_STORAGE_KEY, JSON.stringify({
+                            schoolName: data.schoolName || schoolNameInput.value,
+                            schoolYear: data.schoolYear || schoolYearInput.value
+                        }));
+                    }
+                } catch (err) {
+                    console.log("Aviso: Configuración escolar cargada desde local/predeterminados:", err.message);
+                }
+            }
+            loadSchoolConfigFromFirestore();
+
             // --- Lógica de Admin ---
             if (adminLoginForm) {
                 adminLoginForm.addEventListener('submit', async (e) => {
@@ -1155,8 +1215,15 @@
                         console.log("Admin signed in successfully");
                         if (adminLoginBox) adminLoginBox.style.display = 'none';
                         if (dbSection) dbSection.classList.remove('hidden');
-                        if (schoolNameInput) schoolNameInput.readOnly = false;
-                        if (schoolYearInput) schoolYearInput.readOnly = false;
+                        if (adminSchoolSaveContainer) adminSchoolSaveContainer.classList.remove('hidden');
+                        if (schoolNameInput) {
+                            schoolNameInput.readOnly = false;
+                            schoolNameInput.classList.add('bg-amber-50', 'border-amber-400');
+                        }
+                        if (schoolYearInput) {
+                            schoolYearInput.readOnly = false;
+                            schoolYearInput.classList.add('bg-amber-50', 'border-amber-400');
+                        }
                         loadDatabaseData(currentFilter);
                     } catch (error) {
                         console.error("Admin login failed:", error);
@@ -1164,6 +1231,73 @@
                             adminLoginError.textContent = 'Acceso denegado: ' + error.message;
                             adminLoginError.style.display = 'block';
                         }
+                    }
+                });
+            }
+
+            // Event listener para el botón de guardar configuración escolar
+            if (saveSchoolConfigBtn) {
+                saveSchoolConfigBtn.addEventListener('click', async () => {
+                    const newSchoolName = schoolNameInput ? schoolNameInput.value.trim() : '';
+                    const newSchoolYear = schoolYearInput ? schoolYearInput.value.trim() : '';
+
+                    if (!newSchoolName || !newSchoolYear) {
+                        alert('Por favor, ingresa un nombre de centro y un curso escolar válidos.');
+                        return;
+                    }
+
+                    const originalBtnHtml = saveSchoolConfigBtn.innerHTML;
+                    saveSchoolConfigBtn.disabled = true;
+                    saveSchoolConfigBtn.innerHTML = `
+                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                        </svg>
+                        <span>Guardando...</span>
+                    `;
+
+                    try {
+                        // Guardar en Firestore para que sea global
+                        await db.collection('app_settings').doc('school_config').set({
+                            schoolName: newSchoolName,
+                            schoolYear: newSchoolYear,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            updatedBy: auth.currentUser ? auth.currentUser.email : 'admin'
+                        }, { merge: true });
+
+                        // Guardar en LocalStorage
+                        localStorage.setItem(SCHOOL_CONFIG_STORAGE_KEY, JSON.stringify({
+                            schoolName: newSchoolName,
+                            schoolYear: newSchoolYear
+                        }));
+
+                        updateSchoolNameDisplay(newSchoolName);
+
+                        saveSchoolConfigBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                        saveSchoolConfigBtn.classList.add('bg-emerald-600');
+                        saveSchoolConfigBtn.innerHTML = `
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span>¡Guardado con éxito!</span>
+                        `;
+
+                        setTimeout(() => {
+                            saveSchoolConfigBtn.classList.remove('bg-emerald-600');
+                            saveSchoolConfigBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                            saveSchoolConfigBtn.innerHTML = originalBtnHtml;
+                            saveSchoolConfigBtn.disabled = false;
+                        }, 2500);
+
+                    } catch (error) {
+                        console.error("Error al guardar la configuración escolar en Firestore:", error);
+                        // Fallback a LocalStorage si hay restricción de permisos
+                        localStorage.setItem(SCHOOL_CONFIG_STORAGE_KEY, JSON.stringify({
+                            schoolName: newSchoolName,
+                            schoolYear: newSchoolYear
+                        }));
+                        updateSchoolNameDisplay(newSchoolName);
+                        alert(`Configuración escolar guardada localmente.\n(Nota Firestore: ${error.message})`);
+                        saveSchoolConfigBtn.innerHTML = originalBtnHtml;
+                        saveSchoolConfigBtn.disabled = false;
                     }
                 });
             }
@@ -1814,6 +1948,232 @@
                 exportAllExcelBtn.addEventListener('click', () => exportData(true));
             }
             // ===== FIN DE LA CORRECCIÓN =====
+
+            // --- Lógica para Generar 5 Fichas de Prueba ---
+            const generateSamplesBtn = document.getElementById('generateSamplesBtn');
+            if (generateSamplesBtn) {
+                generateSamplesBtn.addEventListener('click', async () => {
+                    const confirmCreate = confirm("¿Deseas generar 5 fichas de prueba con distintos estados de salud (verde, amarillo y rojo) para comprobar el funcionamiento?");
+                    if (!confirmCreate) return;
+
+                    const originalBtnHtml = generateSamplesBtn.innerHTML;
+                    generateSamplesBtn.disabled = true;
+                    generateSamplesBtn.innerHTML = `
+                        <svg class="animate-spin h-4 w-4 text-indigo-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                        </svg>
+                        <span>Creando fichas...</span>
+                    `;
+
+                    const currentYear = schoolYearInput ? schoolYearInput.value : '2025/2026';
+                    const currentSchool = schoolNameInput ? schoolNameInput.value : 'Colegio Madre Matilde';
+
+                    const sampleRecords = [
+                        {
+                            student_name: 'Lucía Fernández Ramos',
+                            student_name_lower: 'lucía fernández ramos',
+                            birth_date: '2018-04-15',
+                            group: 'primaria_2',
+                            email: 'lucia.familia@educarex.es',
+                            school_name: currentSchool,
+                            school_year: currentYear,
+                            guardian1_name: 'María Ramos Gómez',
+                            guardian1_mobile: '612345678',
+                            guardian1_work: '924112233',
+                            guardian2_name: 'Carlos Fernández Soto',
+                            guardian2_mobile: '698765432',
+                            guardian2_work: '',
+                            diseases: 'Ninguna',
+                            known_allergies: 'Ninguna',
+                            usual_treatment: '',
+                            risk_situation: '',
+                            notify_emergency: 'on',
+                            notify_parents: 'on',
+                            recommendations: 'Uso de gafas para lectura en pizarra.',
+                            allergy_type: [],
+                            allergy_pollen_text: '',
+                            allergy_food_text: '',
+                            allergy_meds_text: 'no',
+                            allergy_medication_text: '',
+                            allergy_symptoms: [],
+                            allergy_symptoms_other_text: '',
+                            psych_treatment: 'no',
+                            psych_problem: '',
+                            psych_treatment_details: '',
+                            special_care: 'no',
+                            special_care_text: '',
+                            observations: 'Sin incidencias previas.',
+                            authorization: 'authorize',
+                            submission_date: new Date().toISOString().split('T')[0]
+                        },
+                        {
+                            student_name: 'Mateo Morales Sánchez',
+                            student_name_lower: 'mateo morales sánchez',
+                            birth_date: '2016-09-22',
+                            group: 'primaria_4',
+                            email: 'mateo.morales@educarex.es',
+                            school_name: currentSchool,
+                            school_year: currentYear,
+                            guardian1_name: 'Elena Sánchez Pérez',
+                            guardian1_mobile: '654987321',
+                            guardian1_work: '',
+                            guardian2_name: '',
+                            guardian2_mobile: '',
+                            guardian2_work: '',
+                            diseases: '',
+                            known_allergies: 'Alergia al polen de olivo y gramíneas',
+                            usual_treatment: 'Antihistamínico (Ebastina) en primavera',
+                            risk_situation: 'Rinitis y picor ocular en época primaveral',
+                            notify_emergency: '',
+                            notify_parents: 'on',
+                            recommendations: 'Evitar actividades físicas en exteriores en picos de polinización.',
+                            allergy_type: ['pollen'],
+                            allergy_pollen_text: 'Polen de gramíneas y olivo',
+                            allergy_food_text: '',
+                            allergy_meds_text: 'no',
+                            allergy_medication_text: '',
+                            allergy_symptoms: ['rhinitis', 'ocular'],
+                            allergy_symptoms_other_text: '',
+                            psych_treatment: 'no',
+                            psych_problem: '',
+                            psych_treatment_details: '',
+                            special_care: 'no',
+                            special_care_text: '',
+                            observations: 'Trae colirio en la mochila con autorización médica.',
+                            authorization: 'authorize',
+                            submission_date: new Date().toISOString().split('T')[0]
+                        },
+                        {
+                            student_name: 'Alejandro Benítez Romero',
+                            student_name_lower: 'alejandro benítez romero',
+                            birth_date: '2013-11-05',
+                            group: 'eso_1',
+                            email: 'alejandro.benitez@educarex.es',
+                            school_name: currentSchool,
+                            school_year: currentYear,
+                            guardian1_name: 'Pedro Benítez Cruz',
+                            guardian1_mobile: '633221144',
+                            guardian1_work: '927334455',
+                            guardian2_name: 'Rosa Romero Blanco',
+                            guardian2_mobile: '644556677',
+                            guardian2_work: '',
+                            diseases: 'Diabetes Mellitus Tipo 1',
+                            known_allergies: 'Ninguna',
+                            usual_treatment: 'Insulina subcutánea y sensor continuo de glucosa (Freestyle Libre)',
+                            risk_situation: 'Hipoglucemias en clase o educación física',
+                            notify_emergency: 'on',
+                            notify_parents: 'on',
+                            recommendations: 'Permitir ingerir zumo o galletas en el aula de forma inmediata ante aviso de hipoglucemia del sensor.',
+                            allergy_type: [],
+                            allergy_pollen_text: '',
+                            allergy_food_text: '',
+                            allergy_meds_text: 'no',
+                            allergy_medication_text: '',
+                            allergy_symptoms: [],
+                            allergy_symptoms_other_text: '',
+                            psych_treatment: 'no',
+                            psych_problem: '',
+                            psych_treatment_details: '',
+                            special_care: 'yes',
+                            special_care_text: 'Requiere llevar teléfono móvil vinculado al sensor de glucosa y kit de Glucagón en secretaría / enfermería.',
+                            observations: 'Protocolo de diabetes activo y entregado en jefatura de estudios.',
+                            authorization: 'authorize',
+                            submission_date: new Date().toISOString().split('T')[0]
+                        },
+                        {
+                            student_name: 'Sofía Navarro Gil',
+                            student_name_lower: 'sofía navarro gil',
+                            birth_date: '2020-02-18',
+                            group: 'infantil_5a',
+                            email: 'sofia.navarro@educarex.es',
+                            school_name: currentSchool,
+                            school_year: currentYear,
+                            guardian1_name: 'Laura Gil Domínguez',
+                            guardian1_mobile: '677889900',
+                            guardian1_work: '',
+                            guardian2_name: 'Ignacio Navarro Prieto',
+                            guardian2_mobile: '688990011',
+                            guardian2_work: '',
+                            diseases: 'Ninguna',
+                            known_allergies: 'Alergia severa a los frutos secos (cacahuete y nuez)',
+                            usual_treatment: 'Lleva auto-inyector de adrenalina (Jext 150)',
+                            risk_situation: 'Ingesta o contacto accidental con trazas de frutos secos',
+                            notify_emergency: 'on',
+                            notify_parents: 'on',
+                            recommendations: 'Mesa de comedor sin frutos secos. Lavado riguroso de manos de los compañeros tras la merienda.',
+                            allergy_type: ['food'],
+                            allergy_pollen_text: '',
+                            allergy_food_text: 'Cacahuetes, nueces y trazas',
+                            allergy_meds_text: 'no',
+                            allergy_medication_text: '',
+                            allergy_symptoms: ['anaphylactic_shock', 'dyspnea', 'hives'],
+                            allergy_symptoms_other_text: 'Hinchazón de labios y dificultad respiratoria',
+                            psych_treatment: 'no',
+                            psych_problem: '',
+                            psych_treatment_details: '',
+                            special_care: 'yes',
+                            special_care_text: 'Uso inmediato de autoinyector de adrenalina ante sospecha fundada de anafilaxia y llamada al 112.',
+                            observations: 'Autoinyector depositado en el botiquín del aula de infantil.',
+                            authorization: 'authorize',
+                            submission_date: new Date().toISOString().split('T')[0]
+                        },
+                        {
+                            student_name: 'Daniel Delgado Ruiz',
+                            student_name_lower: 'daniel delgado ruiz',
+                            birth_date: '2015-07-30',
+                            group: 'primaria_5',
+                            email: 'daniel.delgado@educarex.es',
+                            school_name: currentSchool,
+                            school_year: currentYear,
+                            guardian1_name: 'Javier Delgado Ortiz',
+                            guardian1_mobile: '622446688',
+                            guardian1_work: '924887766',
+                            guardian2_name: 'Carmen Ruiz Martín',
+                            guardian2_mobile: '611335577',
+                            guardian2_work: '',
+                            diseases: 'Asma bronquial intermitente',
+                            known_allergies: 'Ácaros del polvo',
+                            usual_treatment: 'Ventolín (Salbutamol) inhalado a demanda con cámara espaciadora',
+                            risk_situation: 'Crisis asmática o broncoespasmo durante carrera continua',
+                            notify_emergency: 'on',
+                            notify_parents: 'on',
+                            recommendations: '2 inhalaciones de Ventolín 15 minutos antes de educación física intensa.',
+                            allergy_type: ['other'],
+                            allergy_pollen_text: '',
+                            allergy_food_text: '',
+                            allergy_meds_text: 'no',
+                            allergy_medication_text: '',
+                            allergy_symptoms: ['cough', 'dyspnea'],
+                            allergy_symptoms_other_text: 'Pitos y opresión torácica',
+                            psych_treatment: 'no',
+                            psych_problem: '',
+                            psych_treatment_details: '',
+                            special_care: 'no',
+                            special_care_text: '',
+                            observations: 'Lleva su propio inhalador marcado con su nombre.',
+                            authorization: 'authorize',
+                            submission_date: new Date().toISOString().split('T')[0]
+                        }
+                    ];
+
+                    let createdCount = 0;
+                    try {
+                        for (const record of sampleRecords) {
+                            record.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                            await dbCollectionRef.add(record);
+                            createdCount++;
+                        }
+                        alert(`¡Se han creado con éxito ${createdCount} fichas de prueba! La tabla se actualizará automáticamente en tiempo real.`);
+                    } catch (err) {
+                        console.error("Error al crear fichas de prueba:", err);
+                        alert(`Error al generar fichas de prueba: ${err.message}`);
+                    } finally {
+                        generateSamplesBtn.disabled = false;
+                        generateSamplesBtn.innerHTML = originalBtnHtml;
+                    }
+                });
+            }
 
         }); 
     </script>

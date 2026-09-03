@@ -38,6 +38,14 @@ service cloud.firestore {
       allow read: if true;  // Cualquiera puede leer para verificar
       allow write: if false;  // Solo desde Console
     }
+
+    // ============================================
+    // CONFIGURACIÓN DE LA APP (Centro y Curso)
+    // ============================================
+    match /app_settings/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
     
     // ============================================
     // FICHAS DE SALUD
