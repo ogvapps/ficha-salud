@@ -11,8 +11,10 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return isSignedIn() && 
-             exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+      return isSignedIn() && (
+        request.auth.token.email == 'orestesgv@gmail.com' ||
+        exists(/databases/$(database)/documents/admin_users/$(request.auth.uid))
+      );
     }
     
     function isValidHealthData() {

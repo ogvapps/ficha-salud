@@ -2341,8 +2341,12 @@
 
                     let createdCount = 0;
                     try {
+                        const currentUid = auth.currentUser ? auth.currentUser.uid : null;
                         for (const record of sampleRecords) {
                             record.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                            if (currentUid) {
+                                record.createdBy = currentUid;
+                            }
                             await dbCollectionRef.add(record);
                             createdCount++;
                         }
