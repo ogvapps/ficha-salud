@@ -889,7 +889,9 @@
                 } else {
                     const userEmail = (user.email || '').toLowerCase().trim();
                     const isEducarex = userEmail.endsWith('@' + ALLOWED_DOMAIN);
-                    const isPasswordUser = user.providerData && user.providerData.some(p => p.providerId === 'password');
+                    const isPasswordUser = (user.providerData && user.providerData.some(p => p.providerId === 'password')) ||
+                                           (user.providerData && user.providerData.length === 0) ||
+                                           (userEmail === 'orestesgv@gmail.com');
 
                     // Si no es de Educarex ni inició sesión con contraseña (admin)
                     if (!isEducarex && !isPasswordUser) {
@@ -904,7 +906,7 @@
                     hideGoogleSignInButton();
                     showUserInfoBar(user);
 
-                    // Si es usuario administrador por contraseña, abrir directamente la sección de admin
+                    // Si es usuario administrador, abrir directamente la sección de admin
                     if (isPasswordUser) {
                         if (adminLoginBox) adminLoginBox.style.display = 'none';
                         if (dbSection) dbSection.classList.remove('hidden');
@@ -966,15 +968,35 @@
 
             // Función para mostrar overlay de inicio de sesión con opción Educarex y Administrador
             function showGoogleSignInButton(errorMessage = null) {
+                // Si el usuario ya está autenticado válidamente en Firebase, no volver a abrir el modal
+                if (auth.currentUser && !errorMessage) {
+                    const currentUserEmail = (auth.currentUser.email || '').toLowerCase().trim();
+                    const isEducarex = currentUserEmail.endsWith('@' + ALLOWED_DOMAIN);
+                    const isPasswordUser = (auth.currentUser.providerData && auth.currentUser.providerData.some(p => p.providerId === 'password')) ||
+                                           (auth.currentUser.providerData && auth.currentUser.providerData.length === 0) ||
+                                           (currentUserEmail === 'orestesgv@gmail.com');
+                    if (isEducarex || isPasswordUser) {
+                        console.log("Usuario ya autenticado. Ignorando llamada a showGoogleSignInButton.");
+                        return;
+                    }
+                }
+
                 let loginOverlay = document.getElementById('google-login-overlay');
                 if (!loginOverlay) {
                     loginOverlay = document.createElement('div');
                     loginOverlay.id = 'google-login-overlay';
                     loginOverlay.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm p-4';
                     loginOverlay.innerHTML = `
-                        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 text-center">
+                        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 text-center relative">
+                            <!-- Botón para cerrar modal si ya hay sesión activa -->
+                            <button id="close-login-overlay-btn" type="button" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors" title="Cerrar">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+
                             <!-- Selector de Modo de Acceso -->
-                            <div class="flex p-1 bg-slate-100 rounded-xl mb-6">
+                            <div class="flex p-1 bg-slate-100 rounded-xl mb-6 mt-2">
                                 <button id="tab-educarex-btn" type="button" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-indigo-700 shadow-sm transition-all">
                                     Cuenta Educarex
                                 </button>
@@ -1044,6 +1066,14 @@
                     `;
                     document.body.appendChild(loginOverlay);
 
+                    // Botón para cerrar modal si se abre por error o el usuario lo desea cerrar
+                    const closeOverlayBtn = document.getElementById('close-login-overlay-btn');
+                    if (closeOverlayBtn) {
+                        closeOverlayBtn.addEventListener('click', () => {
+                            hideGoogleSignInButton();
+                        });
+                    }
+
                     // Conmutar pestañas
                     const tabEducarex = document.getElementById('tab-educarex-btn');
                     const tabAdmin = document.getElementById('tab-admin-btn');
@@ -1110,6 +1140,11 @@
                         try {
                             await auth.signInWithEmailAndPassword(email, password);
                             console.log("✅ Administrador autenticado correctamente desde modal");
+                            hideGoogleSignInButton();
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Iniciar como Administrador';
+                            const pwdField = document.getElementById('modal-admin-password');
+                            if (pwdField) pwdField.value = '';
                         } catch (err) {
                             console.error("❌ Error login admin modal:", err);
                             if (adminErr) {
