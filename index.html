@@ -857,65 +857,145 @@
             const db = firebase.firestore();
             firebase.firestore.setLogLevel('debug');
 
-            // --- Autenticación con Google ---
+            // --- Autenticación con Google (Exclusivo Educarex) ---
+            const ALLOWED_DOMAIN = 'educarex.es';
+
             // Verificar si el usuario ya está autenticado
             auth.onAuthStateChanged(async (user) => {
                 if (!user) {
-                    // Usuario no autenticado, mostrar botón de login
                     console.log("Usuario no autenticado. Mostrando botón de Google Sign-In...");
                     showGoogleSignInButton();
+                    hideUserInfoBar();
                 } else {
-                    // Usuario autenticado
-                    console.log("Usuario autenticado:", user.email || user.uid);
+                    const userEmail = (user.email || '').toLowerCase().trim();
+                    const isEducarex = userEmail.endsWith('@' + ALLOWED_DOMAIN);
+
+                    if (!isEducarex) {
+                        console.warn(`Usuario no autorizado (${userEmail}). Se requiere cuenta de ${ALLOWED_DOMAIN}`);
+                        await auth.signOut();
+                        showGoogleSignInButton(`Acceso restringido: Debes usar una cuenta institucional de @${ALLOWED_DOMAIN}. Tu cuenta actual (${userEmail}) no tiene acceso.`);
+                        hideUserInfoBar();
+                        return;
+                    }
+
+                    console.log("Usuario Educarex autenticado:", user.email);
                     hideGoogleSignInButton();
+                    showUserInfoBar(user);
+
+                    // Autocompletar el email en el formulario si está vacío
+                    const emailInput = document.getElementById('email');
+                    if (emailInput && !emailInput.value) {
+                        emailInput.value = user.email;
+                    }
                 }
             });
 
-            // Función para mostrar botón de Google Sign-In
-            function showGoogleSignInButton() {
-                // Crear overlay de login si no existe
+            // Función para mostrar barra con datos del usuario y opción de cerrar sesión
+            function showUserInfoBar(user) {
+                let userBar = document.getElementById('educarex-user-bar');
+                if (!userBar) {
+                    userBar = document.createElement('div');
+                    userBar.id = 'educarex-user-bar';
+                    userBar.className = 'flex flex-wrap items-center justify-between bg-emerald-50 border border-emerald-200 text-emerald-900 px-4 py-2 rounded-lg mb-6 text-sm';
+                    const container = document.querySelector('.max-w-4xl');
+                    if (container) {
+                        container.insertBefore(userBar, container.firstChild);
+                    }
+                }
+                userBar.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <span>Sesión iniciada con: <strong>${user.email}</strong></span>
+                    </div>
+                    <button id="logout-btn" class="text-xs font-semibold text-red-600 hover:text-red-800 underline ml-auto">
+                        Cerrar sesión
+                    </button>
+                `;
+                userBar.style.display = 'flex';
+
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) {
+                    logoutBtn.onclick = async () => {
+                        await auth.signOut();
+                    };
+                }
+            }
+
+            function hideUserInfoBar() {
+                const userBar = document.getElementById('educarex-user-bar');
+                if (userBar) userBar.style.display = 'none';
+            }
+
+            // Función para mostrar overlay de inicio de sesión
+            function showGoogleSignInButton(errorMessage = null) {
                 let loginOverlay = document.getElementById('google-login-overlay');
                 if (!loginOverlay) {
                     loginOverlay = document.createElement('div');
                     loginOverlay.id = 'google-login-overlay';
-                    loginOverlay.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+                    loginOverlay.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm';
                     loginOverlay.innerHTML = `
-                        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
-                            <div class="text-center mb-6">
-                                <h2 class="text-2xl font-bold text-slate-800 mb-2">Bienvenido a Ficha de Salud</h2>
-                                <p class="text-slate-600">Inicia sesión con tu cuenta de Google para continuar</p>
+                        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 border border-slate-100 text-center">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 mb-4">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
+                                </svg>
                             </div>
-                            <button id="google-signin-btn" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-300 hover:border-indigo-500 text-slate-700 font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg">
+                            <h2 class="text-2xl font-bold text-slate-800 mb-1">Acceso Educarex</h2>
+                            <p class="text-slate-600 text-sm mb-6">Inicia sesión con tu cuenta corporativa <strong>@educarex.es</strong> para acceder a la Ficha de Salud.</p>
+                            
+                            <div id="login-error-msg" class="hidden mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg text-left"></div>
+
+                            <button id="google-signin-btn" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-300 hover:border-indigo-600 text-slate-700 hover:text-indigo-600 font-semibold py-3 px-6 rounded-xl transition-all duration-200 hover:shadow-md">
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M19.6 10.227c0-.709-.064-1.39-.182-2.045H10v3.868h5.382a4.6 4.6 0 01-1.996 3.018v2.51h3.232c1.891-1.742 2.982-4.305 2.982-7.35z" fill="#4285F4"/>
                                     <path d="M10 20c2.7 0 4.964-.895 6.618-2.423l-3.232-2.509c-.895.6-2.04.955-3.386.955-2.605 0-4.81-1.76-5.595-4.123H1.064v2.59A9.996 9.996 0 0010 20z" fill="#34A853"/>
                                     <path d="M4.405 11.9c-.2-.6-.314-1.24-.314-1.9 0-.66.114-1.3.314-1.9V5.51H1.064A9.996 9.996 0 000 10c0 1.614.386 3.14 1.064 4.49l3.34-2.59z" fill="#FBBC05"/>
                                     <path d="M10 3.977c1.468 0 2.786.505 3.823 1.496l2.868-2.868C14.959.99 12.695 0 10 0 6.09 0 2.71 2.24 1.064 5.51l3.34 2.59C5.19 5.736 7.395 3.977 10 3.977z" fill="#EA4335"/>
                                 </svg>
-                                Continuar con Google
+                                Entrar con cuenta Educarex
                             </button>
-                            <p class="text-xs text-slate-500 text-center mt-4">
-                                Al continuar, aceptas nuestros términos de servicio y política de privacidad
+                            
+                            <p class="text-xs text-slate-400 mt-4">
+                                Solo personal y miembros autorizados con cuenta @educarex.es
                             </p>
                         </div>
                     `;
                     document.body.appendChild(loginOverlay);
 
-                    // Event listener para el botón
                     document.getElementById('google-signin-btn').addEventListener('click', async () => {
+                        const errorDiv = document.getElementById('login-error-msg');
+                        if (errorDiv) errorDiv.classList.add('hidden');
+
                         try {
                             const provider = new firebase.auth.GoogleAuthProvider();
+                            // Sugerir el dominio de Google Workspace de educarex
                             provider.setCustomParameters({
-                                prompt: 'select_account'
+                                prompt: 'select_account',
+                                hd: 'educarex.es'
                             });
                             await auth.signInWithPopup(provider);
-                            console.log("✅ Login con Google exitoso");
+                            console.log("✅ Proceso de inicio con Google completado");
                         } catch (error) {
                             console.error("❌ Error en Google Sign-In:", error);
-                            alert('Error al iniciar sesión con Google: ' + error.message);
+                            if (errorDiv) {
+                                errorDiv.textContent = 'Error al iniciar sesión: ' + error.message;
+                                errorDiv.classList.remove('hidden');
+                            }
                         }
                     });
                 }
+
+                const errorDiv = document.getElementById('login-error-msg');
+                if (errorDiv) {
+                    if (errorMessage) {
+                        errorDiv.textContent = errorMessage;
+                        errorDiv.classList.remove('hidden');
+                    } else {
+                        errorDiv.classList.add('hidden');
+                    }
+                }
+
                 loginOverlay.style.display = 'flex';
             }
 
