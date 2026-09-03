@@ -1,0 +1,35 @@
+{
+    "indexes": [],
+    "fieldOverrides": [
+        {
+            "collectionGroup": "health_questionnaires",
+            "fieldPath": "student_name_lower",
+            "indexes": [
+                {
+                    "order": "ASCENDING",
+                    "queryScope": "COLLECTION"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "health_questionnaires",
+            "fieldPath": "group",
+            "indexes": [
+                {
+                    "order": "ASCENDING",
+                    "queryScope": "COLLECTION"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "health_questionnaires",
+            "fieldPath": "createdAt",
+            "indexes": [
+                {
+                    "order": "DESCENDING",
+                    "queryScope": "COLLECTION"
+                }
+            ]
+        }
+    ]
+}

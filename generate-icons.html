@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Generador de Íconos PNG</title>
+</head>
+
+<body>
+    <h1>Generador de Íconos para PWA</h1>
+    <canvas id="canvas192" width="192" height="192"></canvas>
+    <canvas id="canvas512" width="512" height="512"></canvas>
+    <br><br>
+    <button onclick="downloadIcons()">Descargar Íconos</button>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+
+            // Gradiente de fondo
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#14b8a6');
+            gradient.addColorStop(1, '#3b82f6');
+
+            // Fondo redondeado
+            const radius = size * 0.22;
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, radius);
+            ctx.fill();
+
+            // Escala para el tamaño
+            const scale = size / 192;
+
+            // Clipboard
+            ctx.save();
+            ctx.translate(48 * scale, 36 * scale);
+
+            // Clip superior
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.roundRect(32 * scale, 0, 32 * scale, 12 * scale, 6 * scale);
+            ctx.fill();
+
+            // Círculo del clip
+            ctx.fillStyle = '#14b8a6';
+            ctx.beginPath();
+            ctx.arc(48 * scale, 6 * scale, 6 * scale, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cuerpo del clipboard
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 6 * scale;
+            ctx.beginPath();
+            ctx.roundRect(8 * scale, 16 * scale, 80 * scale, 104 * scale, 8 * scale);
+            ctx.fill();
+            ctx.stroke();
+
+            // Cruz médica
+            ctx.fillStyle = '#14b8a6';
+
+            // Vertical
+            ctx.beginPath();
+            ctx.roundRect(44 * scale, 56 * scale, 12 * scale, 48 * scale, 2 * scale);
+            ctx.fill();
+
+            // Horizontal
+            ctx.beginPath();
+            ctx.roundRect(32 * scale, 74 * scale, 36 * scale, 12 * scale, 2 * scale);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Dibujar íconos
+        drawIcon(document.getElementById('canvas192'), 192);
+        drawIcon(document.getElementById('canvas512'), 512);
+
+        function downloadIcons() {
+            // Descargar 192x192
+            const canvas192 = document.getElementById('canvas192');
+            const link192 = document.createElement('a');
+            link192.download = 'icon-192.png';
+            link192.href = canvas192.toDataURL('image/png');
+            link192.click();
+
+            // Descargar 512x512
+            setTimeout(() => {
+                const canvas512 = document.getElementById('canvas512');
+                const link512 = document.createElement('a');
+                link512.download = 'icon-512.png';
+                link512.href = canvas512.toDataURL('image/png');
+                link512.click();
+            }, 500);
+        }
+    </script>
+</body>
+
+</html>

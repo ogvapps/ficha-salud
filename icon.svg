@@ -1,0 +1,30 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo con gradiente -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#14b8a6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Fondo redondeado -->
+  <rect width="192" height="192" rx="42" fill="url(#grad1)"/>
+  
+  <!-- Clipboard -->
+  <g transform="translate(48, 36)">
+    <!-- Clip superior -->
+    <rect x="32" y="0" width="32" height="12" rx="6" fill="white"/>
+    <circle cx="48" cy="6" r="6" fill="#14b8a6"/>
+    
+    <!-- Cuerpo del clipboard -->
+    <rect x="8" y="16" width="80" height="104" rx="8" fill="white" stroke="white" stroke-width="6"/>
+    
+    <!-- Cruz médica -->
+    <g transform="translate(28, 40)">
+      <!-- Vertical -->
+      <rect x="16" y="0" width="12" height="48" rx="2" fill="#14b8a6"/>
+      <!-- Horizontal -->
+      <rect x="4" y="18" width="36" height="12" rx="2" fill="#14b8a6"/>
+    </g>
+  </g>
+</svg>

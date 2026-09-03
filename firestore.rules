@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+    
+    function isValidHealthData() {
+      let data = request.resource.data;
+      return data.student_name is string &&
+             data.student_name.size() >= 3 &&
+             data.birth_date is string &&
+             data.group is string &&
+             data.email is string;
+    }
+    
+    // ============================================
+    // DENEGAR TODO POR DEFECTO
+    // ============================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // ============================================
+    // COLECCIÓN DE ADMINS - Legible por todos
+    // ============================================
+    match /admin_users/{userId} {
+      allow read: if true;  // Cualquiera puede leer para verificar
+      allow write: if false;  // Solo desde Console
+    }
+    
+    // ============================================
+    // FICHAS DE SALUD
+    // ============================================
+    match /artifacts/{appId}/public/data/health_questionnaires/{documentId} {
+      
+      // LECTURA: Solo admins O el creador del documento
+      allow read: if isAdmin() || 
+                     (isSignedIn() && resource.data.createdBy == request.auth.uid);
+      
+      // CREACIÓN: Cualquier usuario autenticado
+      allow create: if isSignedIn() && isValidHealthData();
+      
+      // ACTUALIZACIÓN: Solo admins
+      allow update: if isAdmin();
+      
+      // ELIMINACIÓN: Solo admins
+      allow delete: if isAdmin();
+    }
+  }
+}
