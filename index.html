@@ -630,6 +630,11 @@
                             </svg>
                             Exportar Todo
                         </button>
+                        <button id="saveSchoolConfigBtn2"
+                            class="flex items-center px-3 py-1.5 border border-indigo-500 text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            Guardar Centro y Curso
+                        </button>
                         <button id="generateSamplesBtn"
                             class="flex items-center px-3 py-1.5 border border-indigo-300 text-sm font-medium rounded-md shadow-sm text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1391,71 +1396,87 @@
                 });
             }
 
-            // Event listener para el botón de guardar configuración escolar
-            if (saveSchoolConfigBtn) {
-                saveSchoolConfigBtn.addEventListener('click', async () => {
-                    const newSchoolName = schoolNameInput ? schoolNameInput.value.trim() : '';
-                    const newSchoolYear = schoolYearInput ? schoolYearInput.value.trim() : '';
+            // Función reutilizable para guardar configuración escolar
+            async function saveSchoolConfigHandler(triggerBtn) {
+                const newSchoolName = schoolNameInput ? schoolNameInput.value.trim() : '';
+                const newSchoolYear = schoolYearInput ? schoolYearInput.value.trim() : '';
 
-                    if (!newSchoolName || !newSchoolYear) {
-                        alert('Por favor, ingresa un nombre de centro y un curso escolar válidos.');
-                        return;
-                    }
+                if (!newSchoolName || !newSchoolYear) {
+                    alert('Por favor, ingresa un nombre de centro y un curso escolar válidos.');
+                    return;
+                }
 
-                    const originalBtnHtml = saveSchoolConfigBtn.innerHTML;
-                    saveSchoolConfigBtn.disabled = true;
-                    saveSchoolConfigBtn.innerHTML = `
-                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                const btns = [saveSchoolConfigBtn, document.getElementById('saveSchoolConfigBtn2')].filter(Boolean);
+                const originalHtmls = btns.map(b => b.innerHTML);
+
+                btns.forEach(b => {
+                    b.disabled = true;
+                    b.innerHTML = `
+                        <svg class="animate-spin h-4 w-4 mr-1.5 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                         </svg>
                         <span>Guardando...</span>
                     `;
+                });
 
-                    try {
-                        // Guardar en Firestore para que sea global
-                        await db.collection('app_settings').doc('school_config').set({
-                            schoolName: newSchoolName,
-                            schoolYear: newSchoolYear,
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            updatedBy: auth.currentUser ? auth.currentUser.email : 'admin'
-                        }, { merge: true });
+                try {
+                    // Guardar en Firestore para que sea global
+                    await db.collection('app_settings').doc('school_config').set({
+                        schoolName: newSchoolName,
+                        schoolYear: newSchoolYear,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedBy: auth.currentUser ? auth.currentUser.email : 'admin'
+                    }, { merge: true });
 
-                        // Guardar en LocalStorage
-                        localStorage.setItem(SCHOOL_CONFIG_STORAGE_KEY, JSON.stringify({
-                            schoolName: newSchoolName,
-                            schoolYear: newSchoolYear
-                        }));
+                    // Guardar en LocalStorage
+                    localStorage.setItem(SCHOOL_CONFIG_STORAGE_KEY, JSON.stringify({
+                        schoolName: newSchoolName,
+                        schoolYear: newSchoolYear
+                    }));
 
-                        updateSchoolNameDisplay(newSchoolName);
+                    updateSchoolNameDisplay(newSchoolName);
 
-                        saveSchoolConfigBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-                        saveSchoolConfigBtn.classList.add('bg-emerald-600');
-                        saveSchoolConfigBtn.innerHTML = `
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    btns.forEach(b => {
+                        b.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                        b.classList.add('bg-emerald-600');
+                        b.innerHTML = `
+                            <svg class="w-4 h-4 mr-1.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             <span>¡Guardado con éxito!</span>
                         `;
+                    });
 
-                        setTimeout(() => {
-                            saveSchoolConfigBtn.classList.remove('bg-emerald-600');
-                            saveSchoolConfigBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                            saveSchoolConfigBtn.innerHTML = originalBtnHtml;
-                            saveSchoolConfigBtn.disabled = false;
-                        }, 2500);
+                    setTimeout(() => {
+                        btns.forEach((b, idx) => {
+                            b.classList.remove('bg-emerald-600');
+                            b.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                            b.innerHTML = originalHtmls[idx];
+                            b.disabled = false;
+                        });
+                    }, 2500);
 
-                    } catch (error) {
-                        console.error("Error al guardar la configuración escolar en Firestore:", error);
-                        // Fallback a LocalStorage si hay restricción de permisos
-                        localStorage.setItem(SCHOOL_CONFIG_STORAGE_KEY, JSON.stringify({
-                            schoolName: newSchoolName,
-                            schoolYear: newSchoolYear
-                        }));
-                        updateSchoolNameDisplay(newSchoolName);
-                        alert(`Configuración escolar guardada localmente.\n(Nota Firestore: ${error.message})`);
-                        saveSchoolConfigBtn.innerHTML = originalBtnHtml;
-                        saveSchoolConfigBtn.disabled = false;
-                    }
-                });
+                } catch (error) {
+                    console.error("Error al guardar la configuración escolar en Firestore:", error);
+                    // Fallback a LocalStorage si hay restricción de permisos
+                    localStorage.setItem(SCHOOL_CONFIG_STORAGE_KEY, JSON.stringify({
+                        schoolName: newSchoolName,
+                        schoolYear: newSchoolYear
+                    }));
+                    updateSchoolNameDisplay(newSchoolName);
+                    alert(`Configuración escolar guardada localmente.\n(Nota Firestore: ${error.message})`);
+                    btns.forEach((b, idx) => {
+                        b.innerHTML = originalHtmls[idx];
+                        b.disabled = false;
+                    });
+                }
+            }
+
+            if (saveSchoolConfigBtn) {
+                saveSchoolConfigBtn.addEventListener('click', () => saveSchoolConfigHandler(saveSchoolConfigBtn));
+            }
+            const saveSchoolConfigBtn2 = document.getElementById('saveSchoolConfigBtn2');
+            if (saveSchoolConfigBtn2) {
+                saveSchoolConfigBtn2.addEventListener('click', () => saveSchoolConfigHandler(saveSchoolConfigBtn2));
             }
 
             // --- Lógica Dinámica de UI ---
