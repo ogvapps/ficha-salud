@@ -1835,10 +1835,33 @@
 
                 const headers = ['Estado', ...Object.values(translations)]; // Cabeceras ordenadas
 
-                for (const sheetName in sheetsData) {
-                    if (sheetsData[sheetName].length === 0) continue;
+                function sanitizeSheetName(name) {
+                    if (!name) return 'Hoja1';
+                    // Reemplazar saltos de línea y múltiples espacios
+                    let clean = name.replace(/\s+/g, ' ').trim();
+                    // Eliminar caracteres no permitidos en hojas de Excel: \ / ? * : [ ]
+                    clean = clean.replace(/[\\/?*:[\]]/g, '_');
+                    // Excel prohíbe nombres de más de 31 caracteres
+                    if (clean.length > 31) {
+                        clean = clean.substring(0, 31).trim();
+                    }
+                    return clean || 'Hoja1';
+                }
 
-                    const ws = XLSX.utils.json_to_sheet(sheetsData[sheetName], { header: headers });
+                for (const rawSheetName in sheetsData) {
+                    if (sheetsData[rawSheetName].length === 0) continue;
+
+                    let sheetName = sanitizeSheetName(rawSheetName);
+                    // Evitar nombres de hoja duplicados tras el recorte
+                    let counter = 1;
+                    while (wb.SheetNames.includes(sheetName)) {
+                        const suffix = `_${counter}`;
+                        const baseLen = 31 - suffix.length;
+                        sheetName = sanitizeSheetName(rawSheetName).substring(0, baseLen) + suffix;
+                        counter++;
+                    }
+
+                    const ws = XLSX.utils.json_to_sheet(sheetsData[rawSheetName], { header: headers });
                     ws['!cols'] = headers.map(() => ({ wch: 25 }));
                     const range = XLSX.utils.decode_range(ws['!ref']);
 
@@ -2019,12 +2042,15 @@
                         }
                         const sheets = {};
                         const groupButtons = [...groupFilterButtons.querySelectorAll('button')].filter(b => b.dataset.group !== 'all');
-                        groupButtons.forEach(button => sheets[button.textContent] = []); // Preparar hojas por nombre
+                        groupButtons.forEach(button => {
+                            const name = button.textContent.replace(/\s+/g, ' ').trim();
+                            sheets[name] = [];
+                        });
 
                         querySnapshot.forEach(docSnap => {
                             const groupKey = docSnap.data().group;
                             const button = groupButtons.find(b => b.dataset.group === groupKey);
-                            const groupName = button ? button.textContent : 'Sin Grupo';
+                            const groupName = button ? button.textContent.replace(/\s+/g, ' ').trim() : 'Sin Grupo';
                             if (!sheets[groupName]) sheets[groupName] = [];
                             sheets[groupName].push(formatDataForExcel(docSnap));
                         });
