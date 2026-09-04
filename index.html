@@ -106,6 +106,39 @@
             /* indigo-600 */
             border-color: #4f46e5;
         }
+
+        /* Estilos de impresión para la ficha médica */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #detailsModal,
+            #detailsModal * {
+                visibility: visible;
+            }
+            #detailsModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                padding: 0 !important;
+            }
+            #detailsModal > div {
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            #detailsModalBody {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            #printDetailsModalBtn,
+            #closeDetailsModalBtn {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -830,19 +863,34 @@
 
     <!-- Modal de Detalles -->
     <div id="detailsModal"
-        class="fixed inset-0 bg-black/60 flex items-center justify-center hidden z-50 p-4 transition-opacity duration-300">
-        <div class="relative p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white">
-            <div class="flex justify-between items-center pb-3 border-b border-slate-200">
-                <h3 class="text-xl leading-6 font-bold text-slate-900">Detalles de la Ficha</h3>
-                <button id="closeDetailsModalBtn"
-                    class="p-1 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-3 sm:p-6 transition-opacity duration-300">
+        <div class="relative p-6 border border-slate-200 w-full max-w-4xl shadow-2xl rounded-2xl bg-white max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-200">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-indigo-50 text-indigo-700 rounded-xl">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-900">Expediente de Salud Escolar</h3>
+                        <p class="text-xs text-slate-500">Datos médicos, contactos familiares y autorizaciones</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="printDetailsModalBtn" title="Imprimir Ficha"
+                        class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors flex items-center gap-1.5 text-xs font-semibold border border-slate-200 shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span>Imprimir</span>
+                    </button>
+                    <button id="closeDetailsModalBtn"
+                        class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <div id="detailsModalBody" class="mt-4 max-h-[70vh] overflow-y-auto pr-2">
+            <div id="detailsModalBody" class="mt-4 overflow-y-auto pr-1 flex-1">
                 <!-- Contenido generado por JS -->
             </div>
         </div>
@@ -1759,8 +1807,54 @@
                 return { color: '#22c55e', name: 'Verde', reason: 'No se reportan condiciones significativas.' };
             }
 
+            // Mapeo exhaustivo de valores a Castellano legible
+            const groupNameMap = {
+                'infantil_3a': 'Infantil 3 Años',
+                'infantil_4a': 'Infantil 4 Años',
+                'infantil_5a': 'Infantil 5 Años',
+                'primaria_1': 'Primaria 1º',
+                'primaria_2': 'Primaria 2º',
+                'primaria_3': 'Primaria 3º',
+                'primaria_4': 'Primaria 4º',
+                'primaria_5': 'Primaria 5º',
+                'primaria_6': 'Primaria 6º',
+                'eso_1': 'ESO 1º',
+                'eso_2': 'ESO 2º',
+                'eso_3': 'ESO 3º',
+                'eso_4': 'ESO 4º'
+            };
+
+            const allergyTypeMap = {
+                'pollen': 'Pólenes',
+                'food': 'Alimentos',
+                'meds': 'Medicamentos'
+            };
+
+            const symptomMap = {
+                'skin': 'Cutáneos (picor, habones, urticaria)',
+                'digestive': 'Digestivos (vómitos, dolor, diarrea)',
+                'respiratory': 'Respiratorios (tos, estornudos, ahogo, sibilancias)',
+                'anaphylactic_shock': 'Shock anafiláctico (grave / emergencia)',
+                'other': 'Otros'
+            };
+
+            function formatSpanishDate(isoDate) {
+                if (!isoDate) return 'No especificada';
+                const parts = isoDate.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return isoDate;
+            }
+
+            function formatBooleanSpanish(val) {
+                if (val === true || val === 'yes' || val === 'on' || val === 'si') return 'Sí';
+                if (val === false || val === 'no' || val === 'off') return 'No';
+                return val || 'No especificado';
+            }
+
             /**
-             * Muestra los detalles de una ficha en un modal.
+             * Muestra los detalles de una ficha en un modal estructurado, elegante y 100% en castellano.
              * @param {string} docId - El ID del documento a mostrar.
              */
             async function showDetails(docId) {
@@ -1768,23 +1862,257 @@
                 try {
                     const docSnap = await db.collection(dbCollectionPath).doc(docId).get();
                     if (docSnap.exists) {
-                        const data = docSnap.data();
-                        let html = '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">';
-                        for (const key in translations) {
-                            if (Object.hasOwnProperty.call(data, key)) {
-                                let value = data[key] || 'No especificado';
-                                if (Array.isArray(value)) value = value.join(', ');
-                                if (value === 'on') value = 'Sí'; else if (value === 'authorize') value = 'AUTORIZO'; else if (value === 'not_authorize') value = 'NO AUTORIZO'; else if (value === 'yes') value = 'Sí'; else if (value === 'no') value = 'No';
-                                html += `<div class="p-3 bg-slate-50 rounded-lg break-words"><dt class="font-semibold text-slate-800">${translations[key] || key}</dt><dd class="text-slate-600">${value}</dd></div>`;
-                            }
+                        const d = docSnap.data();
+                        const status = getHealthStatus(d);
+
+                        // Formatear grupo
+                        const formattedGroup = groupNameMap[d.group] || (d.group ? d.group.replace(/_/g, ' ').toUpperCase() : 'No asignado');
+
+                        // Formatear tipos de alergias
+                        let allergyTypesDisplay = 'Ninguno';
+                        if (Array.isArray(d.allergy_type) && d.allergy_type.length > 0) {
+                            allergyTypesDisplay = d.allergy_type.map(t => allergyTypeMap[t] || t).join(', ');
+                        } else if (typeof d.allergy_type === 'string' && d.allergy_type.trim()) {
+                            allergyTypesDisplay = allergyTypeMap[d.allergy_type] || d.allergy_type;
                         }
-                        html += '</dl>';
+
+                        // Formatear síntomas
+                        let symptomsDisplay = 'Ninguno reportado';
+                        if (Array.isArray(d.allergy_symptoms) && d.allergy_symptoms.length > 0) {
+                            symptomsDisplay = d.allergy_symptoms.map(s => symptomMap[s] || s).join(', ');
+                        } else if (typeof d.allergy_symptoms === 'string' && d.allergy_symptoms.trim()) {
+                            symptomsDisplay = symptomMap[d.allergy_symptoms] || d.allergy_symptoms;
+                        }
+
+                        // Formatear autorización
+                        const isAuthorized = d.authorization === 'authorize';
+
+                        let html = `
+                            <div class="space-y-6 text-slate-800" id="printableRecord">
+
+                                <!-- Tarjeta de Cabecera del Alumno y Semáforo de Salud -->
+                                <div class="bg-gradient-to-r from-slate-50 to-indigo-50/40 p-5 rounded-2xl border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                                            ${(d.student_name || 'A').charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xl font-bold text-slate-900 leading-tight">${d.student_name || 'Nombre no indicado'}</h4>
+                                            <div class="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-slate-600">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-semibold bg-indigo-100 text-indigo-800">
+                                                    ${formattedGroup}
+                                                </span>
+                                                <span>•</span>
+                                                <span>Nacimiento: <strong>${formatSpanishDate(d.birth_date)}</strong></span>
+                                                <span>•</span>
+                                                <span>Año: ${d.school_year || '2025/2026'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 shadow-sm">
+                                        <span class="status-dot w-3.5 h-3.5" style="background-color: ${status.color};"></span>
+                                        <div class="text-xs">
+                                            <p class="font-bold text-slate-800">Estado: ${status.name}</p>
+                                            <p class="text-slate-500 max-w-[200px] truncate" title="${status.reason}">${status.reason}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- SECCIÓN 1: Datos Generales y Escolares -->
+                                <div>
+                                    <h5 class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5 mb-3">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                        Datos Académicos y Contacto
+                                    </h5>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Centro Educativo</span>
+                                            <span class="text-sm font-medium text-slate-800">${d.school_name || 'Colegio Madre Matilde'}</span>
+                                        </div>
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Curso Escolar</span>
+                                            <span class="text-sm font-medium text-slate-800">${d.school_year || '2025/2026'}</span>
+                                        </div>
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Correo Electrónico</span>
+                                            <span class="text-sm font-medium text-slate-800 break-all">${d.email || 'No indicado'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- SECCIÓN 2: Familiares / Tutores Legales -->
+                                <div>
+                                    <h5 class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5 mb-3">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                        Tutores Legales y Contactos de Emergencia
+                                    </h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- Tutor 1 -->
+                                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+                                                <span class="text-xs font-bold text-indigo-800 uppercase tracking-wide">Tutor/a 1</span>
+                                                <span class="text-xs text-slate-500 font-medium">Principal</span>
+                                            </div>
+                                            <p class="text-sm font-bold text-slate-900">${d.guardian1_name || 'No especificado'}</p>
+                                            <div class="mt-2 space-y-1 text-xs text-slate-600">
+                                                <p><span class="text-slate-500">Teléfono Móvil:</span> <strong>${d.guardian1_mobile || 'No indicado'}</strong></p>
+                                                <p><span class="text-slate-500">Teléfono Trabajo:</span> ${d.guardian1_work || 'No indicado'}</p>
+                                            </div>
+                                        </div>
+                                        <!-- Tutor 2 -->
+                                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+                                                <span class="text-xs font-bold text-indigo-800 uppercase tracking-wide">Tutor/a 2</span>
+                                                <span class="text-xs text-slate-500 font-medium">Secundario</span>
+                                            </div>
+                                            <p class="text-sm font-bold text-slate-900">${d.guardian2_name || 'No especificado'}</p>
+                                            <div class="mt-2 space-y-1 text-xs text-slate-600">
+                                                <p><span class="text-slate-500">Teléfono Móvil:</span> <strong>${d.guardian2_mobile || 'No indicado'}</strong></p>
+                                                <p><span class="text-slate-500">Teléfono Trabajo:</span> ${d.guardian2_work || 'No indicado'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- SECCIÓN 3: Información Médica y de Salud -->
+                                <div>
+                                    <h5 class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5 mb-3">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                        Información Médica
+                                    </h5>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Enfermedades Diagnosticadas</span>
+                                            <span class="text-sm font-medium text-slate-800">${d.diseases || 'Ninguna'}</span>
+                                        </div>
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Alergias Conocidas (General)</span>
+                                            <span class="text-sm font-medium text-slate-800">${d.known_allergies || 'Ninguna'}</span>
+                                        </div>
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Tratamiento Habitual</span>
+                                            <span class="text-sm font-medium text-slate-800">${d.usual_treatment || 'Ninguno'}</span>
+                                        </div>
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Situación de Riesgo Leve</span>
+                                            <span class="text-sm font-medium text-slate-800">${d.risk_situation || 'No reportada'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- SECCIÓN 4: Alergias, Síntomas y Cuidados Específicos -->
+                                <div>
+                                    <h5 class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5 mb-3">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                        Detalle de Alergias y Cuidados Especiales
+                                    </h5>
+                                    <div class="space-y-3">
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Tipos de Alergia Reportados</span>
+                                            <span class="text-sm font-medium text-slate-800">${allergyTypesDisplay}</span>
+                                        </div>
+
+                                        ${d.allergy_pollen_text ? `
+                                        <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-200">
+                                            <span class="text-xs font-semibold text-amber-800 block">Detalle Alergia a Pólenes</span>
+                                            <span class="text-sm text-slate-800">${d.allergy_pollen_text}</span>
+                                        </div>` : ''}
+
+                                        ${d.allergy_food_text ? `
+                                        <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-200">
+                                            <span class="text-xs font-semibold text-amber-800 block">Detalle Alergia a Alimentos</span>
+                                            <span class="text-sm text-slate-800">${d.allergy_food_text}</span>
+                                        </div>` : ''}
+
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">¿Alergia a Medicamentos?</span>
+                                            <span class="text-sm font-medium text-slate-800">${formatBooleanSpanish(d.allergy_meds_text)} ${d.allergy_medication_text ? `(${d.allergy_medication_text})` : ''}</span>
+                                        </div>
+
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Síntomas Habituales de Alergia</span>
+                                            <span class="text-sm font-medium text-slate-800">${symptomsDisplay} ${d.allergy_symptoms_other_text ? ` - ${d.allergy_symptoms_other_text}` : ''}</span>
+                                        </div>
+
+                                        <!-- Psicológico y Cuidados especiales -->
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                <span class="text-xs font-semibold text-slate-500 block">¿Tratamiento Psicológico/Psiquiátrico?</span>
+                                                <span class="text-sm font-medium text-slate-800">${formatBooleanSpanish(d.psych_treatment)}</span>
+                                                ${d.psych_problem ? `<p class="text-xs text-slate-600 mt-1"><strong>Problema:</strong> ${d.psych_problem}</p>` : ''}
+                                                ${d.psych_treatment_details ? `<p class="text-xs text-slate-600"><strong>Detalle:</strong> ${d.psych_treatment_details}</p>` : ''}
+                                            </div>
+                                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                <span class="text-xs font-semibold text-slate-500 block">¿Necesita Cuidados Especiales?</span>
+                                                <span class="text-sm font-medium text-slate-800">${formatBooleanSpanish(d.special_care)}</span>
+                                                ${d.special_care_text ? `<p class="text-xs text-slate-600 mt-1"><strong>Detalle:</strong> ${d.special_care_text}</p>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- SECCIÓN 5: Protocolo de Urgencia y Autorización -->
+                                <div>
+                                    <h5 class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5 mb-3">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                        Protocolo de Urgencias y Consentimiento
+                                    </h5>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                                            <span class="text-xs font-semibold text-slate-500 block">Protocolo de Aviso Urgente</span>
+                                            <p class="text-xs text-slate-700">• Avisar a Urgencias 112: <strong>${formatBooleanSpanish(d.notify_emergency)}</strong></p>
+                                            <p class="text-xs text-slate-700">• Avisar a Tutores: <strong>${formatBooleanSpanish(d.notify_parents)}</strong></p>
+                                        </div>
+                                        <div class="p-3 ${isAuthorized ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'} rounded-xl border">
+                                            <span class="text-xs font-bold ${isAuthorized ? 'text-emerald-800' : 'text-rose-800'} block">Autorización de Administración de Medicación</span>
+                                            <span class="text-sm font-bold ${isAuthorized ? 'text-emerald-700' : 'text-rose-700'}">
+                                                ${isAuthorized ? '✓ AUTORIZADO' : '✕ NO AUTORIZADO'}
+                                            </span>
+                                            <p class="text-[11px] text-slate-500 mt-1">Cumplimentado el ${formatSpanishDate(d.submission_date)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- SECCIÓN 6: Observaciones y Recomendaciones -->
+                                ${(d.observations || d.recommendations) ? `
+                                <div>
+                                    <h5 class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5 mb-3">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+                                        Observaciones y Recomendaciones Adicionales
+                                    </h5>
+                                    <div class="space-y-3">
+                                        ${d.observations ? `
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Observaciones de la Familia</span>
+                                            <p class="text-sm text-slate-700 whitespace-pre-wrap">${d.observations}</p>
+                                        </div>` : ''}
+                                        ${d.recommendations ? `
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span class="text-xs font-semibold text-slate-500 block">Recomendaciones del Centro / Médicas</span>
+                                            <p class="text-sm text-slate-700 whitespace-pre-wrap">${d.recommendations}</p>
+                                        </div>` : ''}
+                                    </div>
+                                </div>` : ''}
+
+                            </div>
+                        `;
+
                         if (detailsModalBody) detailsModalBody.innerHTML = html;
                         if (detailsModal) detailsModal.classList.remove('hidden');
+
+                        // Configurar botón de impresión
+                        const printBtn = document.getElementById('printDetailsModalBtn');
+                        if (printBtn) {
+                            printBtn.onclick = () => {
+                                window.print();
+                            };
+                        }
                     } else {
                         console.log("No such document!");
                     }
-                } catch (error) { console.error("Error fetching details: ", error); }
+                } catch (error) {
+                    console.error("Error fetching details: ", error);
+                }
             }
 
             /**
