@@ -617,6 +617,70 @@
                     </fieldset>
                 </div>
 
+                <!-- Firmas Digitales de los Progenitores / Tutores -->
+                <div class="p-4 sm:p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-200 pb-2">
+                        <label class="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            <span>Firmas de Conformidad y Autorización</span>
+                        </label>
+                        <span class="text-xs text-slate-500 font-medium">Firma táctil en móvil o con ratón en PC</span>
+                    </div>
+                    <p class="text-xs text-slate-600">
+                        Por favor, firmen dentro de los recuadros con el dedo/pantalla táctil o con el ratón para dar conformidad a los datos y autorizaciones médicas.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Casilla 1: Firma Padre / Tutor 1 -->
+                        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                                    <span>Firma 1: Padre / Tutor</span>
+                                    <span id="sig1-name-preview" class="text-indigo-600 font-medium text-[11px]"></span>
+                                </span>
+                                <button type="button" id="clearSig1Btn" class="text-xs text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    <span>Borrar</span>
+                                </button>
+                            </div>
+                            <div class="relative w-full h-36 bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg overflow-hidden touch-none cursor-crosshair">
+                                <canvas id="signatureCanvas1" class="w-full h-full block touch-none"></canvas>
+                                <span id="sig1-placeholder" class="absolute inset-0 flex items-center justify-center text-xs text-slate-400 pointer-events-none select-none">
+                                    Firme aquí (Padre / Tutor 1)
+                                </span>
+                            </div>
+                            <div class="mt-2 flex justify-between items-center text-[11px] text-slate-500">
+                                <span>Línea de firma</span>
+                                <span id="sig1-status" class="text-slate-400 font-medium">Sin firmar</span>
+                            </div>
+                        </div>
+
+                        <!-- Casilla 2: Firma Madre / Tutora 2 -->
+                        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                                    <span>Firma 2: Madre / Tutora</span>
+                                    <span id="sig2-name-preview" class="text-indigo-600 font-medium text-[11px]"></span>
+                                </span>
+                                <button type="button" id="clearSig2Btn" class="text-xs text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    <span>Borrar</span>
+                                </button>
+                            </div>
+                            <div class="relative w-full h-36 bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg overflow-hidden touch-none cursor-crosshair">
+                                <canvas id="signatureCanvas2" class="w-full h-full block touch-none"></canvas>
+                                <span id="sig2-placeholder" class="absolute inset-0 flex items-center justify-center text-xs text-slate-400 pointer-events-none select-none">
+                                    Firme aquí (Madre / Tutora 2)
+                                </span>
+                            </div>
+                            <div class="mt-2 flex justify-between items-center text-[11px] text-slate-500">
+                                <span>Línea de firma</span>
+                                <span id="sig2-status" class="text-slate-400 font-medium">Sin firmar</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
                     <label for="submission_date" class="block text-sm font-medium text-slate-700">Fecha de
                         Cumplimentación</label>
@@ -1569,6 +1633,208 @@
                 });
             }
 
+            // --- Lógica de Firmas Digitales (Padre/Tutor 1 y Madre/Tutora 2) ---
+            const signatureCanvas1 = document.getElementById('signatureCanvas1');
+            const signatureCanvas2 = document.getElementById('signatureCanvas2');
+            const clearSig1Btn = document.getElementById('clearSig1Btn');
+            const clearSig2Btn = document.getElementById('clearSig2Btn');
+            const sig1Placeholder = document.getElementById('sig1-placeholder');
+            const sig2Placeholder = document.getElementById('sig2-placeholder');
+            const sig1Status = document.getElementById('sig1-status');
+            const sig2Status = document.getElementById('sig2-status');
+            const sig1NamePreview = document.getElementById('sig1-name-preview');
+            const sig2NamePreview = document.getElementById('sig2-name-preview');
+
+            class SignaturePad {
+                constructor(canvas, placeholder, statusEl, clearBtn) {
+                    this.canvas = canvas;
+                    this.placeholder = placeholder;
+                    this.statusEl = statusEl;
+                    this.clearBtn = clearBtn;
+                    this.ctx = canvas ? canvas.getContext('2d') : null;
+                    this.isDrawing = false;
+                    this.hasDrawn = false;
+                    this.lastX = 0;
+                    this.lastY = 0;
+
+                    if (this.canvas && this.ctx) {
+                        this.init();
+                    }
+                }
+
+                init() {
+                    this.resize();
+                    window.addEventListener('resize', () => this.resize(true));
+
+                    // Soporte unificado para ratón, pantallas táctiles y lápices ópticos (Pointer Events)
+                    this.canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
+                    this.canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
+                    this.canvas.addEventListener('pointerup', (e) => this.onPointerUp(e));
+                    this.canvas.addEventListener('pointerleave', (e) => this.onPointerUp(e));
+                    this.canvas.addEventListener('pointercancel', (e) => this.onPointerUp(e));
+
+                    // Prevenir desplazamiento de pantalla en móviles mientras se firma
+                    this.canvas.addEventListener('touchstart', (e) => {
+                        if (e.cancelable) e.preventDefault();
+                    }, { passive: false });
+                    this.canvas.addEventListener('touchmove', (e) => {
+                        if (e.cancelable) e.preventDefault();
+                    }, { passive: false });
+
+                    if (this.clearBtn) {
+                        this.clearBtn.addEventListener('click', () => this.clear());
+                    }
+                }
+
+                resize(preserve = false) {
+                    if (!this.canvas) return;
+                    const rect = this.canvas.getBoundingClientRect();
+                    if (rect.width === 0 || rect.height === 0) return;
+
+                    let tempImage = null;
+                    if (preserve && this.hasDrawn) {
+                        tempImage = this.toDataURL();
+                    }
+
+                    const dpr = window.devicePixelRatio || 1;
+                    this.canvas.width = rect.width * dpr;
+                    this.canvas.height = rect.height * dpr;
+                    this.ctx.scale(dpr, dpr);
+
+                    this.ctx.strokeStyle = '#0f172a'; // Tono grafito/tinta oscura elegante
+                    this.ctx.lineWidth = 2.2;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.lineJoin = 'round';
+
+                    if (tempImage) {
+                        const img = new Image();
+                        img.onload = () => {
+                            this.ctx.drawImage(img, 0, 0, rect.width, rect.height);
+                        };
+                        img.src = tempImage;
+                    }
+                }
+
+                getPos(e) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    return {
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top
+                    };
+                }
+
+                onPointerDown(e) {
+                    this.resize();
+                    this.isDrawing = true;
+                    try {
+                        this.canvas.setPointerCapture?.(e.pointerId);
+                    } catch (err) {}
+                    const pos = this.getPos(e);
+                    this.lastX = pos.x;
+                    this.lastY = pos.y;
+
+                    // Dibujar trazo inicial / punto
+                    this.ctx.beginPath();
+                    this.ctx.arc(pos.x, pos.y, 1.1, 0, Math.PI * 2);
+                    this.ctx.fillStyle = this.ctx.strokeStyle;
+                    this.ctx.fill();
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(pos.x, pos.y);
+
+                    this.setDrawnState(true);
+                }
+
+                onPointerMove(e) {
+                    if (!this.isDrawing) return;
+                    const pos = this.getPos(e);
+                    this.ctx.lineTo(pos.x, pos.y);
+                    this.ctx.stroke();
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(pos.x, pos.y);
+                    this.lastX = pos.x;
+                    this.lastY = pos.y;
+                }
+
+                onPointerUp(e) {
+                    if (this.isDrawing) {
+                        this.isDrawing = false;
+                        try {
+                            this.canvas.releasePointerCapture?.(e.pointerId);
+                        } catch (err) {}
+                    }
+                }
+
+                setDrawnState(drawn) {
+                    this.hasDrawn = drawn;
+                    if (this.placeholder) {
+                        this.placeholder.style.display = drawn ? 'none' : 'flex';
+                    }
+                    if (this.statusEl) {
+                        if (drawn) {
+                            this.statusEl.textContent = '✓ Firmado';
+                            this.statusEl.className = 'text-emerald-600 font-semibold';
+                        } else {
+                            this.statusEl.textContent = 'Sin firmar';
+                            this.statusEl.className = 'text-slate-400 font-medium';
+                        }
+                    }
+                }
+
+                clear() {
+                    if (!this.ctx || !this.canvas) return;
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.ctx.clearRect(0, 0, rect.width || 500, rect.height || 250);
+                    this.setDrawnState(false);
+                }
+
+                isEmpty() {
+                    return !this.hasDrawn;
+                }
+
+                toDataURL() {
+                    if (!this.hasDrawn) return null;
+                    return this.canvas.toDataURL('image/png');
+                }
+
+                loadFromDataURL(dataUrl) {
+                    if (!dataUrl) {
+                        this.clear();
+                        return;
+                    }
+                    this.resize();
+                    const img = new Image();
+                    img.onload = () => {
+                        const rect = this.canvas.getBoundingClientRect();
+                        this.ctx.drawImage(img, 0, 0, rect.width || 300, rect.height || 140);
+                        this.setDrawnState(true);
+                        if (this.statusEl) {
+                            this.statusEl.textContent = '✓ Firma registrada';
+                            this.statusEl.className = 'text-indigo-600 font-semibold';
+                        }
+                    };
+                    img.src = dataUrl;
+                }
+            }
+
+            const sigPad1 = new SignaturePad(signatureCanvas1, sig1Placeholder, sig1Status, clearSig1Btn);
+            const sigPad2 = new SignaturePad(signatureCanvas2, sig2Placeholder, sig2Status, clearSig2Btn);
+
+            // Previsualización dinámica de nombres de progenitores en las casillas de firma
+            const guardian1NameInput = form ? form.querySelector('[name="guardian1_name"]') : null;
+            const guardian2NameInput = form ? form.querySelector('[name="guardian2_name"]') : null;
+            if (guardian1NameInput && sig1NamePreview) {
+                guardian1NameInput.addEventListener('input', (e) => {
+                    const val = e.target.value.trim();
+                    sig1NamePreview.textContent = val ? `(${val})` : '';
+                });
+            }
+            if (guardian2NameInput && sig2NamePreview) {
+                guardian2NameInput.addEventListener('input', (e) => {
+                    const val = e.target.value.trim();
+                    sig2NamePreview.textContent = val ? `(${val})` : '';
+                });
+            }
+
             // --- Lógica del Formulario por Pasos (Stepper) ---
             const updateProgressBar = () => {
                 progressBarSteps.forEach(step => {
@@ -1615,6 +1881,14 @@
                     submitBtn.classList.toggle('flex', currentStep === steps.length);
                 }
                 updateProgressBar();
+
+                // Asegurar redimensionado nítido del lienzo al mostrar el paso de firmas
+                if (stepNumber === steps.length) {
+                    setTimeout(() => {
+                        sigPad1?.resize(true);
+                        sigPad2?.resize(true);
+                    }, 50);
+                }
             };
 
             const validateStep = (stepNumber) => {
@@ -1880,6 +2154,13 @@
                 currentAttachedFiles = [];
                 renderAttachedFiles();
                 if (medicalReportsInput) medicalReportsInput.value = '';
+
+                // Limpiar firmas digitales
+                if (typeof sigPad1 !== 'undefined') sigPad1?.clear();
+                if (typeof sigPad2 !== 'undefined') sigPad2?.clear();
+                if (sig1NamePreview) sig1NamePreview.textContent = '';
+                if (sig2NamePreview) sig2NamePreview.textContent = '';
+
                 if (submitBtn) {
                     const submitBtnText = submitBtn.querySelector('.btn-text');
                     if (submitBtnText) submitBtnText.textContent = 'Enviar Ficha';
@@ -1916,6 +2197,21 @@
                     if (schoolYearInput) data.school_year = schoolYearInput.value;
                     if (schoolNameInput) data.school_name = schoolNameInput.value;
                     if (form.student_name) data.student_name_lower = form.student_name.value.trim().toLowerCase();
+
+                    // Capturar firmas digitales de los tutores
+                    const sig1Data = (typeof sigPad1 !== 'undefined' && sigPad1) ? sigPad1.toDataURL() : null;
+                    if (sig1Data) {
+                        data.signature_guardian1 = sig1Data;
+                    } else if (currentEditDocId && typeof sigPad1 !== 'undefined' && sigPad1 && sigPad1.isEmpty()) {
+                        data.signature_guardian1 = null;
+                    }
+
+                    const sig2Data = (typeof sigPad2 !== 'undefined' && sigPad2) ? sigPad2.toDataURL() : null;
+                    if (sig2Data) {
+                        data.signature_guardian2 = sig2Data;
+                    } else if (currentEditDocId && typeof sigPad2 !== 'undefined' && sigPad2 && sigPad2.isEmpty()) {
+                        data.signature_guardian2 = null;
+                    }
 
                     // Procesar informes médicos adjuntos si existen
                     const btnTextSpan = submitBtn ? submitBtn.querySelector('.btn-text') : null;
@@ -2112,6 +2408,8 @@
                 'special_care_text': 'Detalles Cuidados Especiales',
                 'observations': 'Observaciones Adicionales',
                 'medical_reports': 'Informes Médicos Adjuntos',
+                'signature_guardian1': 'Firma Tutor/a 1',
+                'signature_guardian2': 'Firma Tutor/a 2',
                 'authorization': 'Autorización',
                 'submission_date': 'Fecha de Cumplimentación'
             };
@@ -2457,6 +2755,61 @@
                                     </div>`}
                                 </div>
 
+                                <!-- SECCIÓN 8: Firmas Digitales de los Progenitores / Tutores -->
+                                <div>
+                                    <h5 class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5 mb-3">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                        Firmas Digitales de Conformidad y Autorización
+                                    </h5>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <!-- Firma 1: Padre / Tutor 1 -->
+                                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between">
+                                            <div>
+                                                <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+                                                    <span class="text-xs font-bold text-slate-800">Padre / Tutor 1</span>
+                                                    <span class="text-xs text-indigo-600 font-semibold truncate max-w-[150px]">${d.guardian1_name || 'Tutor 1'}</span>
+                                                </div>
+                                                <div class="h-28 bg-white border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden p-2">
+                                                    ${d.signature_guardian1 ? `
+                                                    <img src="${d.signature_guardian1}" alt="Firma Tutor 1" class="max-h-full max-w-full object-contain">
+                                                    ` : `
+                                                    <span class="text-xs text-slate-400 italic">No se ha registrado firma digital</span>
+                                                    `}
+                                                </div>
+                                            </div>
+                                            <div class="mt-2 text-[11px] text-slate-500 flex justify-between items-center">
+                                                <span>Firma digitalizada</span>
+                                                <span class="${d.signature_guardian1 ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">
+                                                    ${d.signature_guardian1 ? '✓ Registrada' : 'Sin firma'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Firma 2: Madre / Tutora 2 -->
+                                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between">
+                                            <div>
+                                                <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+                                                    <span class="text-xs font-bold text-slate-800">Madre / Tutora 2</span>
+                                                    <span class="text-xs text-indigo-600 font-semibold truncate max-w-[150px]">${d.guardian2_name || 'Tutora 2'}</span>
+                                                </div>
+                                                <div class="h-28 bg-white border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden p-2">
+                                                    ${d.signature_guardian2 ? `
+                                                    <img src="${d.signature_guardian2}" alt="Firma Tutora 2" class="max-h-full max-w-full object-contain">
+                                                    ` : `
+                                                    <span class="text-xs text-slate-400 italic">No se ha registrado firma digital</span>
+                                                    `}
+                                                </div>
+                                            </div>
+                                            <div class="mt-2 text-[11px] text-slate-500 flex justify-between items-center">
+                                                <span>Firma digitalizada</span>
+                                                <span class="${d.signature_guardian2 ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">
+                                                    ${d.signature_guardian2 ? '✓ Registrada' : 'Sin firma'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         `;
 
@@ -2571,6 +2924,24 @@
                     currentAttachedFiles = Array.isArray(data.medical_reports) ? [...data.medical_reports] : [];
                     renderAttachedFiles();
 
+                    // Cargar firmas digitales existentes
+                    if (data.signature_guardian1) {
+                        sigPad1?.loadFromDataURL(data.signature_guardian1);
+                    } else {
+                        sigPad1?.clear();
+                    }
+                    if (data.signature_guardian2) {
+                        sigPad2?.loadFromDataURL(data.signature_guardian2);
+                    } else {
+                        sigPad2?.clear();
+                    }
+                    if (sig1NamePreview) {
+                        sig1NamePreview.textContent = data.guardian1_name ? `(${data.guardian1_name})` : '';
+                    }
+                    if (sig2NamePreview) {
+                        sig2NamePreview.textContent = data.guardian2_name ? `(${data.guardian2_name})` : '';
+                    }
+
                     showStep(1); // Ir al paso 1
                     window.scrollTo({ top: form.offsetTop - 30, behavior: 'smooth' });
 
@@ -2593,6 +2964,8 @@
                     let value = data[key] || '';
                     if (key === 'medical_reports' && Array.isArray(value)) {
                         value = value.map(r => r.name || 'informe').join(', ');
+                    } else if (key === 'signature_guardian1' || key === 'signature_guardian2') {
+                        value = value ? 'Registrada' : 'No registrada';
                     } else if (Array.isArray(value)) {
                         value = value.join(', ');
                     }
