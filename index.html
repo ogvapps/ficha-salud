@@ -134,6 +134,7 @@
                 max-height: none !important;
                 overflow: visible !important;
             }
+            #excelDetailsModalBtn,
             #printDetailsModalBtn,
             #closeDetailsModalBtn {
                 display: none !important;
@@ -143,10 +144,10 @@
 </head>
 
 <body class="antialiased">
-    <div class="max-w-4xl mx-auto p-4 sm:p-8">
+    <div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
 
         <!-- Cabecera -->
-        <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 mb-8 max-w-4xl mx-auto">
             <h1 id="pageTitle" class="text-3xl font-bold text-center text-indigo-700 mb-6">Ficha de Salud - Centro
                 Educativo</h1>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -178,7 +179,7 @@
         </div>
 
         <!-- Barra de Progreso -->
-        <div class="mb-12">
+        <div class="mb-12 max-w-4xl mx-auto">
             <div class="relative w-full h-1 bg-slate-200 rounded-full">
                 <div id="progress-line" class="absolute top-0 left-0 h-1 bg-indigo-600 rounded-full" style="width: 0%;">
                 </div>
@@ -218,7 +219,7 @@
         </div>
 
         <!-- Formulario Principal -->
-        <form id="healthForm" class="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200 space-y-8">
+        <form id="healthForm" class="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200 space-y-8 max-w-4xl mx-auto">
 
             <!-- Paso 1: Datos Alumno/a -->
             <fieldset id="step-1" class="form-step active space-y-6">
@@ -550,6 +551,44 @@
                         class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
                 </div>
 
+                <!-- Adjuntar Informes Médicos o Justificantes -->
+                <div class="p-4 sm:p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <label class="block text-sm font-semibold text-slate-800 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                            <span>Adjuntar Informes Médicos (PDF o Imagen)</span>
+                        </label>
+                        <span class="text-xs text-slate-500 font-medium">Opcional</span>
+                    </div>
+                    <p class="text-xs text-slate-600">
+                        Si el alumno/a precisa protocolos de actuación, pautas de medicación o informes de especialista por patologías/alergias, adjunte aquí el documento en PDF o fotografía nítida.
+                    </p>
+
+                    <!-- Zona de subida / Botón para adjuntar -->
+                    <div id="fileUploadDropzone"
+                        class="border-2 border-dashed border-slate-300 hover:border-indigo-500 bg-white rounded-xl p-5 text-center transition-all cursor-pointer group">
+                        <input type="file" id="medicalReportsInput" multiple accept=".pdf,image/png,image/jpeg,image/webp,image/jpg" class="hidden">
+                        <div class="flex flex-col items-center justify-center pointer-events-none">
+                            <div class="w-11 h-11 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-2 group-hover:scale-110 group-hover:bg-indigo-100 transition-all">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            </div>
+                            <p class="text-sm font-medium text-slate-700">
+                                <span class="text-indigo-600 font-semibold group-hover:underline">Haz clic para adjuntar archivo</span> o arrástralo aquí
+                            </p>
+                            <p class="text-[11px] text-slate-400 mt-1">Formatos admitidos: PDF, JPG, PNG (Máx. 5 MB por archivo)</p>
+                        </div>
+                    </div>
+
+                    <!-- Contenedor de previsualización de archivos adjuntados -->
+                    <div id="attachedFilesContainer" class="hidden space-y-2 pt-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-700 uppercase tracking-wider">Archivos adjuntos:</span>
+                            <button type="button" id="clearAllFilesBtn" class="text-xs text-rose-600 hover:underline">Quitar todos</button>
+                        </div>
+                        <div id="attachedFilesList" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+                    </div>
+                </div>
+
                 <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
                     <h3 class="text-base font-semibold text-slate-800">Autorización</h3>
                     <p class="text-sm text-slate-600 mt-2">
@@ -640,12 +679,18 @@
                 <div id="admin-login-error" class="text-red-600 text-sm mt-3 text-center" style="display:none;"></div>
             </div>
 
-            <div id="dbSection" class="hidden mt-6 bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200">
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                    <h3 class="text-xl font-semibold text-slate-800">Base de Datos de Fichas</h3>
-                    <div class="flex flex-wrap justify-center gap-2">
+            <div id="dbSection" class="hidden mt-6 bg-white p-5 sm:p-7 rounded-xl shadow-lg border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 pb-4 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            <span>Base de Datos de Fichas</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">Admin</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Gestión de fichas médicas, descargas individuales y exportaciones</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
                         <button id="exportViewExcelBtn"
-                            class="flex items-center px-3 py-1.5 border border-emerald-300 text-sm font-medium rounded-md shadow-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
+                            class="flex items-center px-3 py-1.5 border border-emerald-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20"
                                 fill="currentColor">
                                 <path fill-rule="evenodd"
@@ -655,7 +700,7 @@
                             Exportar Vista
                         </button>
                         <button id="exportAllExcelBtn"
-                            class="flex items-center px-3 py-1.5 border border-emerald-300 text-sm font-medium rounded-md shadow-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
+                            class="flex items-center px-3 py-1.5 border border-emerald-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20"
                                 fill="currentColor">
                                 <path
@@ -664,96 +709,137 @@
                             Exportar Todo
                         </button>
                         <button id="saveSchoolConfigBtn2"
-                            class="flex items-center px-3 py-1.5 border border-indigo-500 text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                            class="flex items-center px-3 py-1.5 border border-indigo-500 text-xs sm:text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                            Guardar Centro y Curso
+                            Guardar Centro
                         </button>
                         <button id="generateSamplesBtn"
-                            class="flex items-center px-3 py-1.5 border border-indigo-300 text-sm font-medium rounded-md shadow-sm text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+                            class="flex items-center px-3 py-1.5 border border-indigo-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
-                            Crear 5 Fichas de Prueba
+                            5 Fichas de Prueba
                         </button>
                     </div>
                 </div>
 
-                <!-- Filtros -->
-                <div id="group-filter-buttons" class="flex flex-wrap justify-center gap-2 mb-6">
-                    <button data-group="all"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm active">Todos</button>
-                    <!-- Infantil -->
-                    <button data-group="infantil_3a"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Infantil 3
-                        Años</button>
-                    <button data-group="infantil_4a"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Infantil 4
-                        Años</button>
-                    <button data-group="infantil_5a"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Infantil 5
-                        Años</button>
-                    <!-- Primaria -->
-                    <button data-group="primaria_1"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria
-                        1º</button>
-                    <button data-group="primaria_2"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria
-                        2º</button>
-                    <button data-group="primaria_3"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria
-                        3º</button>
-                    <button data-group="primaria_4"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria
-                        4º</button>
-                    <button data-group="primaria_5"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria
-                        5º</button>
-                    <button data-group="primaria_6"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">Primaria
-                        6º</button>
-                    <!-- ESO -->
-                    <button data-group="eso_1"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">ESO
-                        1º</button>
-                    <button data-group="eso_2"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">ESO
-                        2º</button>
-                    <button data-group="eso_3"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">ESO
-                        3º</button>
-                    <button data-group="eso_4"
-                        class="px-3 py-1.5 border border-slate-300 text-sm font-medium rounded-md shadow-sm">ESO
-                        4º</button>
+                <!-- Tarjetas KPI de Resumen Sanitario -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Fichas</p>
+                            <p id="kpiTotalCount" class="text-xl sm:text-2xl font-bold text-slate-800 mt-0.5">0</p>
+                        </div>
+                        <div class="w-9 h-9 rounded-lg bg-slate-200/70 flex items-center justify-center text-slate-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5 flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-semibold text-rose-700 uppercase tracking-wider">Prioritarias</p>
+                            <p id="kpiRedCount" class="text-xl sm:text-2xl font-bold text-rose-700 mt-0.5">0</p>
+                        </div>
+                        <div class="w-9 h-9 rounded-lg bg-rose-200/70 flex items-center justify-center text-rose-600">
+                            <span class="status-dot !w-3.5 !h-3.5" style="background-color: #ef4444;"></span>
+                        </div>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Precaución</p>
+                            <p id="kpiYellowCount" class="text-xl sm:text-2xl font-bold text-amber-700 mt-0.5">0</p>
+                        </div>
+                        <div class="w-9 h-9 rounded-lg bg-amber-200/70 flex items-center justify-center text-amber-600">
+                            <span class="status-dot !w-3.5 !h-3.5" style="background-color: #f59e0b;"></span>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Sin Alertas</p>
+                            <p id="kpiGreenCount" class="text-xl sm:text-2xl font-bold text-emerald-700 mt-0.5">0</p>
+                        </div>
+                        <div class="w-9 h-9 rounded-lg bg-emerald-200/70 flex items-center justify-center text-emerald-600">
+                            <span class="status-dot !w-3.5 !h-3.5" style="background-color: #10b981;"></span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Tabla de Datos -->
-                <div class="overflow-x-auto">
+                <!-- Filtros por Grupo/Curso -->
+                <div id="group-filter-buttons" class="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-5">
+                    <button data-group="all"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm active">Todos</button>
+                    <!-- Infantil -->
+                    <button data-group="infantil_3a"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">Infantil 3 Años</button>
+                    <button data-group="infantil_4a"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">Infantil 4 Años</button>
+                    <button data-group="infantil_5a"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">Infantil 5 Años</button>
+                    <!-- Primaria -->
+                    <button data-group="primaria_1"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">Primaria 1º</button>
+                    <button data-group="primaria_2"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">Primaria 2º</button>
+                    <button data-group="primaria_3"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">Primaria 3º</button>
+                    <button data-group="primaria_4"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">Primaria 4º</button>
+                    <button data-group="primaria_5"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">Primaria 5º</button>
+                    <button data-group="primaria_6"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">Primaria 6º</button>
+                    <!-- ESO -->
+                    <button data-group="eso_1"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">ESO 1º</button>
+                    <button data-group="eso_2"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">ESO 2º</button>
+                    <button data-group="eso_3"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">ESO 3º</button>
+                    <button data-group="eso_4"
+                        class="px-2.5 sm:px-3 py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-lg shadow-sm">ESO 4º</button>
+                </div>
+
+                <!-- Buscador rápido en tiempo real -->
+                <div class="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div class="relative flex-1 max-w-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="search" id="studentSearchInput" placeholder="Buscar por nombre de alumno/a..."
+                            class="block w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs sm:text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                    </div>
+                    <div class="text-xs text-slate-500 flex items-center justify-between sm:justify-end gap-3">
+                        <span>Mostrando <strong id="visibleRowsCount" class="text-slate-800">0</strong> ficha(s)</span>
+                    </div>
+                </div>
+
+                <!-- Tabla de Datos (Diseño optimizado sin scroll horizontal innecesario) -->
+                <div class="overflow-x-auto rounded-lg border border-slate-200">
                     <div id="loading" class="text-center p-6 text-slate-500 hidden">Cargando datos...</div>
                     <p id="no-data" class="text-center p-6 text-slate-500 hidden">No se han encontrado datos.</p>
-                    <table id="dbTable" class="min-w-full divide-y divide-slate-200 hidden">
+                    <table id="dbTable" class="w-full divide-y divide-slate-200 hidden table-auto">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="w-12 px-3 py-2.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
                                     Estado</th>
                                 <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                                     Nombre Alumno/a</th>
                                 <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                                     F. Nacimiento</th>
                                 <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                                     Grupo</th>
                                 <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                                     F. Envío</th>
                                 <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                                     Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="dbTableBody" class="bg-white divide-y divide-slate-200">
+                        <tbody id="dbTableBody" class="bg-white divide-y divide-slate-200 text-xs sm:text-sm">
                             <!-- Filas generadas por JS -->
                         </tbody>
                     </table>
@@ -876,10 +962,15 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="printDetailsModalBtn" title="Imprimir Ficha"
-                        class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors flex items-center gap-1.5 text-xs font-semibold border border-slate-200 shadow-sm">
+                    <button id="excelDetailsModalBtn" title="Descargar Ficha en Excel"
+                        class="p-2 rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors flex items-center gap-1.5 text-xs font-semibold border border-emerald-200 shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span>Descargar Excel</span>
+                    </button>
+                    <button id="printDetailsModalBtn" title="Descargar PDF / Imprimir Ficha"
+                        class="p-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                        <span>Imprimir</span>
+                        <span>Descargar PDF / Imprimir</span>
                     </button>
                     <button id="closeDetailsModalBtn"
                         class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">
@@ -900,6 +991,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
     <footer style="text-align:center; font-size:0.9rem; color:#777; padding:12px 0; margin-top: 2rem;">
           © 2025 Orestes González Villanueva — Desarrollado con Gemini ·
@@ -1290,12 +1382,25 @@
             const groupFilterButtons = document.getElementById('group-filter-buttons');
             const exportViewExcelBtn = document.getElementById('exportViewExcelBtn');
             const exportAllExcelBtn = document.getElementById('exportAllExcelBtn');
+            const studentSearchInput = document.getElementById('studentSearchInput');
+            const visibleRowsCount = document.getElementById('visibleRowsCount');
+            const kpiTotalCount = document.getElementById('kpiTotalCount');
+            const kpiRedCount = document.getElementById('kpiRedCount');
+            const kpiYellowCount = document.getElementById('kpiYellowCount');
+            const kpiGreenCount = document.getElementById('kpiGreenCount');
+            const excelDetailsModalBtn = document.getElementById('excelDetailsModalBtn');
+            const printDetailsModalBtn = document.getElementById('printDetailsModalBtn');
             const steps = Array.from(document.querySelectorAll('.form-step'));
             const nextBtn = document.getElementById('nextBtn');
             const prevBtn = document.getElementById('prevBtn');
             const submitBtn = document.getElementById('submitBtn');
             const progressBarSteps = document.querySelectorAll('.progress-bar-step');
             const progressLine = document.getElementById('progress-line');
+            const fileUploadDropzone = document.getElementById('fileUploadDropzone');
+            const medicalReportsInput = document.getElementById('medicalReportsInput');
+            const attachedFilesContainer = document.getElementById('attachedFilesContainer');
+            const attachedFilesList = document.getElementById('attachedFilesList');
+            const clearAllFilesBtn = document.getElementById('clearAllFilesBtn');
 
             // Referencias para lógica condicional
             const allergyPollen = document.getElementById('allergy_pollen');
@@ -1307,6 +1412,162 @@
             let currentFilter = 'all';
             let currentEditDocId = null; // ID del documento que se está editando
             let unsubscribe = null; // Para la escucha de Firestore
+            let currentAttachedFiles = []; // Array de { file?, name, type, size, dataUrl?, url? }
+
+            /**
+             * Lee un archivo optimizándolo si es una imagen (redimensión y compresión ligera)
+             * o como Data URL si es un documento PDF.
+             */
+            function readFileOptimized(file) {
+                return new Promise((resolve, reject) => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                let width = img.width;
+                                let height = img.height;
+                                const maxDim = 1200;
+                                if (width > maxDim || height > maxDim) {
+                                    if (width > height) {
+                                        height = Math.round((height * maxDim) / width);
+                                        width = maxDim;
+                                    } else {
+                                        width = Math.round((width * maxDim) / height);
+                                        height = maxDim;
+                                    }
+                                }
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+                                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+                                resolve({ dataUrl: compressedDataUrl, type: 'image/jpeg' });
+                            };
+                            img.onerror = () => resolve({ dataUrl: e.target.result, type: file.type });
+                            img.src = e.target.result;
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    } else {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve({ dataUrl: e.target.result, type: file.type });
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            /**
+             * Renderiza las miniaturas y chips de archivos adjuntos en el formulario.
+             */
+            function renderAttachedFiles() {
+                if (!attachedFilesContainer || !attachedFilesList) return;
+                if (currentAttachedFiles.length === 0) {
+                    attachedFilesContainer.classList.add('hidden');
+                    attachedFilesList.innerHTML = '';
+                    return;
+                }
+
+                attachedFilesContainer.classList.remove('hidden');
+                attachedFilesList.innerHTML = '';
+
+                currentAttachedFiles.forEach((item, index) => {
+                    const isPdf = (item.type && item.type.includes('pdf')) || (item.name && item.name.toLowerCase().endsWith('.pdf'));
+                    const previewUrl = item.url || item.dataUrl;
+                    const sizeStr = item.size ? `${Math.round(item.size / 1024)} KB` : '';
+
+                    const card = document.createElement('div');
+                    card.className = 'flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg shadow-sm gap-2';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-2 min-w-0">
+                            ${isPdf ? `
+                            <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-[10px] shrink-0 shadow-sm">
+                                PDF
+                            </div>` : `
+                            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+                                ${previewUrl ? `<img src="${previewUrl}" alt="Miniatura" class="w-full h-full object-cover">` : `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`}
+                            </div>`}
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold text-slate-800 truncate" title="${item.name}">${item.name}</p>
+                                <p class="text-[10px] text-slate-400">${sizeStr || (isPdf ? 'PDF' : 'Imagen')}</p>
+                            </div>
+                        </div>
+                        <button type="button" class="remove-file-btn p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Quitar archivo">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    `;
+
+                    card.querySelector('.remove-file-btn')?.addEventListener('click', () => {
+                        currentAttachedFiles.splice(index, 1);
+                        renderAttachedFiles();
+                    });
+
+                    attachedFilesList.appendChild(card);
+                });
+            }
+
+            async function handleFilesSelected(files) {
+                for (const file of Array.from(files)) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert(`El archivo "${file.name}" supera el límite permitido de 5 MB.`);
+                        continue;
+                    }
+                    try {
+                        const result = await readFileOptimized(file);
+                        currentAttachedFiles.push({
+                            file: file,
+                            name: file.name,
+                            type: result.type,
+                            size: file.size,
+                            dataUrl: result.dataUrl
+                        });
+                    } catch (err) {
+                        console.error("Error al procesar archivo:", err);
+                    }
+                }
+                renderAttachedFiles();
+            }
+
+            // Listeners para la zona de arrastre y selección de informes
+            if (fileUploadDropzone && medicalReportsInput) {
+                fileUploadDropzone.addEventListener('click', () => {
+                    medicalReportsInput.click();
+                });
+
+                fileUploadDropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    fileUploadDropzone.classList.add('border-indigo-500', 'bg-indigo-50/40');
+                });
+
+                fileUploadDropzone.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    fileUploadDropzone.classList.remove('border-indigo-500', 'bg-indigo-50/40');
+                });
+
+                fileUploadDropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    fileUploadDropzone.classList.remove('border-indigo-500', 'bg-indigo-50/40');
+                    if (e.dataTransfer && e.dataTransfer.files) {
+                        handleFilesSelected(e.dataTransfer.files);
+                    }
+                });
+
+                medicalReportsInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                        handleFilesSelected(e.target.files);
+                    }
+                });
+            }
+
+            if (clearAllFilesBtn) {
+                clearAllFilesBtn.addEventListener('click', () => {
+                    currentAttachedFiles = [];
+                    if (medicalReportsInput) medicalReportsInput.value = '';
+                    renderAttachedFiles();
+                });
+            }
 
             // --- Lógica del Formulario por Pasos (Stepper) ---
             const updateProgressBar = () => {
@@ -1616,6 +1877,9 @@
             function resetFormState() {
                 if (form) form.reset();
                 currentEditDocId = null;
+                currentAttachedFiles = [];
+                renderAttachedFiles();
+                if (medicalReportsInput) medicalReportsInput.value = '';
                 if (submitBtn) {
                     const submitBtnText = submitBtn.querySelector('.btn-text');
                     if (submitBtnText) submitBtnText.textContent = 'Enviar Ficha';
@@ -1652,6 +1916,64 @@
                     if (schoolYearInput) data.school_year = schoolYearInput.value;
                     if (schoolNameInput) data.school_name = schoolNameInput.value;
                     if (form.student_name) data.student_name_lower = form.student_name.value.trim().toLowerCase();
+
+                    // Procesar informes médicos adjuntos si existen
+                    const btnTextSpan = submitBtn ? submitBtn.querySelector('.btn-text') : null;
+                    const prevBtnText = btnTextSpan ? btnTextSpan.textContent : '';
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        if (btnTextSpan) btnTextSpan.textContent = 'Guardando informe(s)...';
+                    }
+
+                    try {
+                        const uploadedReports = [];
+                        for (const item of currentAttachedFiles) {
+                            if (item.url) {
+                                uploadedReports.push({
+                                    name: item.name,
+                                    type: item.type,
+                                    size: item.size,
+                                    url: item.url
+                                });
+                            } else if (item.dataUrl || item.file) {
+                                let uploadedUrl = null;
+                                if (item.file && typeof firebase !== 'undefined' && firebase.storage) {
+                                    try {
+                                        const storageRef = firebase.storage().ref();
+                                        const safeName = item.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                                        const fileRef = storageRef.child(`informes_medicos/${Date.now()}_${safeName}`);
+                                        const snap = await fileRef.put(item.file);
+                                        uploadedUrl = await snap.ref.getDownloadURL();
+                                    } catch (stErr) {
+                                        console.warn("Fallback de subida a DataURL:", stErr);
+                                    }
+                                }
+                                if (uploadedUrl) {
+                                    uploadedReports.push({
+                                        name: item.name,
+                                        type: item.type,
+                                        size: item.size,
+                                        url: uploadedUrl
+                                    });
+                                } else {
+                                    uploadedReports.push({
+                                        name: item.name,
+                                        type: item.type,
+                                        size: item.size,
+                                        dataUrl: item.dataUrl
+                                    });
+                                }
+                            }
+                        }
+                        data.medical_reports = uploadedReports;
+                    } catch (uploadErr) {
+                        console.error("Error al procesar adjuntos:", uploadErr);
+                    } finally {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            if (btnTextSpan) btnTextSpan.textContent = prevBtnText;
+                        }
+                    }
 
                     if (currentEditDocId) {
                         // --- MODO ACTUALIZACIÓN ---
@@ -1789,6 +2111,7 @@
                 'special_care': 'Necesita Cuidados Especiales',
                 'special_care_text': 'Detalles Cuidados Especiales',
                 'observations': 'Observaciones Adicionales',
+                'medical_reports': 'Informes Médicos Adjuntos',
                 'authorization': 'Autorización',
                 'submission_date': 'Fecha de Cumplimentación'
             };
@@ -2094,17 +2417,63 @@
                                     </div>
                                 </div>` : ''}
 
+                                <!-- SECCIÓN 7: Informes Médicos y Documentación Adjunta -->
+                                <div>
+                                    <h5 class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5 mb-3">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                        Informes Médicos y Documentación Adjunta ${(d.medical_reports && d.medical_reports.length > 0) ? `(${d.medical_reports.length})` : ''}
+                                    </h5>
+                                    ${(d.medical_reports && d.medical_reports.length > 0) ? `
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        ${d.medical_reports.map((rep, idx) => {
+                                            const isPdf = (rep.type && rep.type.includes('pdf')) || (rep.name && rep.name.toLowerCase().endsWith('.pdf'));
+                                            const fileSource = rep.url || rep.dataUrl;
+                                            const sizeStr = rep.size ? `${Math.round(rep.size / 1024)} KB` : '';
+                                            return `
+                                            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3 hover:bg-slate-100/70 transition-colors">
+                                                <div class="flex items-center gap-2.5 min-w-0">
+                                                    ${isPdf ? `
+                                                    <div class="w-9 h-9 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                                                        PDF
+                                                    </div>` : `
+                                                    <div class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+                                                        ${fileSource ? `<img src="${fileSource}" alt="Miniatura" class="w-full h-full object-cover">` : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`}
+                                                    </div>`}
+                                                    <div class="min-w-0">
+                                                        <p class="text-xs font-semibold text-slate-800 truncate" title="${rep.name || 'Informe médico'}">${rep.name || 'Informe médico'}</p>
+                                                        <p class="text-[11px] text-slate-400">${sizeStr || (isPdf ? 'Documento PDF' : 'Imagen')}</p>
+                                                    </div>
+                                                </div>
+                                                <a href="${fileSource}" target="_blank" download="${rep.name || 'informe'}"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white border border-slate-300 hover:border-indigo-500 text-indigo-600 hover:text-indigo-800 text-xs font-medium rounded-lg shadow-sm transition-colors shrink-0">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                                    <span>Ver</span>
+                                                </a>
+                                            </div>`;
+                                        }).join('')}
+                                    </div>` : `
+                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-500 italic">
+                                        No se adjuntaron informes médicos ni justificantes en esta ficha.
+                                    </div>`}
+                                </div>
+
                             </div>
                         `;
 
                         if (detailsModalBody) detailsModalBody.innerHTML = html;
                         if (detailsModal) detailsModal.classList.remove('hidden');
 
-                        // Configurar botón de impresión
+                        // Configurar botones de descarga individual (PDF e Imprimir / Excel)
                         const printBtn = document.getElementById('printDetailsModalBtn');
                         if (printBtn) {
                             printBtn.onclick = () => {
                                 window.print();
+                            };
+                        }
+                        const excelBtn = document.getElementById('excelDetailsModalBtn');
+                        if (excelBtn) {
+                            excelBtn.onclick = () => {
+                                exportSingleStudentExcel(docId);
                             };
                         }
                     } else {
@@ -2198,6 +2567,10 @@
                         submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'focus:ring-blue-500');
                     }
 
+                    // Cargar informes médicos adjuntos existentes
+                    currentAttachedFiles = Array.isArray(data.medical_reports) ? [...data.medical_reports] : [];
+                    renderAttachedFiles();
+
                     showStep(1); // Ir al paso 1
                     window.scrollTo({ top: form.offsetTop - 30, behavior: 'smooth' });
 
@@ -2218,7 +2591,11 @@
                 const formattedData = { 'Estado': getHealthStatus(data).name }; // Empezar con el Estado
                 for (const key in translations) {
                     let value = data[key] || '';
-                    if (Array.isArray(value)) value = value.join(', ');
+                    if (key === 'medical_reports' && Array.isArray(value)) {
+                        value = value.map(r => r.name || 'informe').join(', ');
+                    } else if (Array.isArray(value)) {
+                        value = value.join(', ');
+                    }
                     if (value === 'on') value = 'Sí';
                     else if (value === 'authorize') value = 'AUTORIZO';
                     else if (value === 'not_authorize') value = 'NO AUTORIZO';
@@ -2300,7 +2677,157 @@
                 }
             }
 
-            // --- Lógica de Carga de Datos y Tabla ---
+            // --- Lógica de Carga de Datos, KPIs, Búsqueda y Tabla ---
+            let currentLoadedDocs = [];
+
+            /**
+             * Descarga o abre el diálogo de impresión directa para guardar como PDF una ficha individual.
+             * @param {string} docId - ID del documento en Firestore.
+             */
+            async function downloadStudentCard(docId) {
+                await showDetails(docId);
+                setTimeout(() => {
+                    window.print();
+                }, 200);
+            }
+
+            /**
+             * Descarga un archivo Excel individual para un alumno específico.
+             * @param {string} docId - ID del documento en Firestore.
+             */
+            async function exportSingleStudentExcel(docId) {
+                try {
+                    const docSnap = await db.collection(dbCollectionPath).doc(docId).get();
+                    if (!docSnap.exists) {
+                        alert("No se encontró la ficha en la base de datos.");
+                        return;
+                    }
+                    const data = docSnap.data();
+                    const formatted = formatDataForExcel(docSnap);
+                    const safeName = (data.student_name || 'Alumno').replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]/g, '_');
+                    const sheetTitle = safeName.substring(0, 30);
+                    generateAndDownloadExcel({ [sheetTitle]: [formatted] }, `FichaSalud_${safeName}.xlsx`);
+                } catch (error) {
+                    console.error("Error al exportar ficha individual a Excel:", error);
+                    alert("Error al exportar ficha a Excel.");
+                }
+            }
+
+            /**
+             * Actualiza las tarjetas KPI y renderiza las filas de la tabla con búsqueda en tiempo real.
+             * @param {Array} docs - Lista de DocumentSnapshots cargados.
+             */
+            function updateKpisAndRender(docs) {
+                if (loadingDiv) loadingDiv.classList.add('hidden');
+
+                // 1. Calcular métricas KPI para la lista de documentos actual
+                let redCount = 0, yellowCount = 0, greenCount = 0;
+                docs.forEach(docSnap => {
+                    const st = getHealthStatus(docSnap.data());
+                    if (st.name === 'Rojo') redCount++;
+                    else if (st.name === 'Amarillo') yellowCount++;
+                    else greenCount++;
+                });
+
+                if (kpiTotalCount) kpiTotalCount.textContent = docs.length;
+                if (kpiRedCount) kpiRedCount.textContent = redCount;
+                if (kpiYellowCount) kpiYellowCount.textContent = yellowCount;
+                if (kpiGreenCount) kpiGreenCount.textContent = greenCount;
+
+                // 2. Filtrar por término de búsqueda (sin distinción de mayúsculas ni tildes)
+                const rawSearch = studentSearchInput ? studentSearchInput.value : '';
+                const searchTerm = rawSearch.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+                const filteredDocs = searchTerm
+                    ? docs.filter(docSnap => {
+                        const name = (docSnap.data().student_name || '')
+                            .toLowerCase()
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "");
+                        return name.includes(searchTerm);
+                    })
+                    : docs;
+
+                if (visibleRowsCount) visibleRowsCount.textContent = filteredDocs.length;
+
+                if (docs.length === 0) {
+                    if (noDataP) {
+                        noDataP.textContent = "No se han encontrado fichas para el curso seleccionado.";
+                        noDataP.classList.remove('hidden');
+                    }
+                    if (dbTable) dbTable.classList.add('hidden');
+                    if (dbTableBody) dbTableBody.innerHTML = '';
+                    return;
+                }
+
+                if (filteredDocs.length === 0) {
+                    if (noDataP) {
+                        noDataP.textContent = `No se encontraron alumnos que coincidan con "${rawSearch}".`;
+                        noDataP.classList.remove('hidden');
+                    }
+                    if (dbTable) dbTable.classList.add('hidden');
+                    if (dbTableBody) dbTableBody.innerHTML = '';
+                    return;
+                }
+
+                if (noDataP) noDataP.classList.add('hidden');
+                if (dbTable) dbTable.classList.remove('hidden');
+                if (dbTableBody) dbTableBody.innerHTML = '';
+
+                filteredDocs.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const status = getHealthStatus(data);
+                    const row = document.createElement('tr');
+
+                    // Aplicar color de fondo suave según estado
+                    if (status.name === 'Rojo') {
+                        row.className = 'bg-rose-50/70 hover:bg-rose-100/80 transition-colors';
+                    } else if (status.name === 'Amarillo') {
+                        row.className = 'bg-amber-50/70 hover:bg-amber-100/80 transition-colors';
+                    } else {
+                        row.className = 'hover:bg-slate-50 transition-colors';
+                    }
+
+                    row.dataset.docId = docSnap.id;
+
+                    row.innerHTML = `
+                        <td class="w-12 px-3 py-2.5 whitespace-nowrap text-center">
+                            <span class="status-dot inline-block cursor-help" style="background-color: ${status.color};" title="${status.reason}"></span>
+                        </td>
+                        <td class="px-3 py-2.5 whitespace-nowrap font-medium text-slate-900">
+                            <span>${data.student_name || ''}</span>
+                            ${(data.medical_reports && data.medical_reports.length > 0) ? `
+                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 ml-1.5 align-middle cursor-help" title="${data.medical_reports.length} informe(s) médico(s) adjunto(s)">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                <span>${data.medical_reports.length}</span>
+                            </span>` : ''}
+                        </td>
+                        <td class="px-3 py-2.5 whitespace-nowrap text-slate-600 text-xs sm:text-sm">${data.birth_date || ''}</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap text-slate-600 text-xs sm:text-sm capitalize">${data.group ? data.group.replace(/_/g, ' ') : ''}</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap text-slate-500 text-xs">${data.submission_date || ''}</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap text-right font-medium">
+                            <div class="inline-flex items-center justify-end space-x-1">
+                                <button class="text-indigo-600 hover:text-indigo-900 view-btn p-1.5 rounded-lg hover:bg-indigo-100/60 transition-colors" title="Ver Expediente Completo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
+                                </button>
+                                <button class="text-emerald-600 hover:text-emerald-900 download-pdf-btn p-1.5 rounded-lg hover:bg-emerald-100/60 transition-colors" title="Descargar / Imprimir Ficha Individual (PDF)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                                </button>
+                                <button class="text-teal-600 hover:text-teal-900 export-excel-btn p-1.5 rounded-lg hover:bg-teal-100/60 transition-colors" title="Descargar Ficha en Excel">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                </button>
+                                <button class="text-blue-600 hover:text-blue-900 edit-btn p-1.5 rounded-lg hover:bg-blue-100/60 transition-colors" title="Editar Ficha">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                                </button>
+                                <button class="text-red-600 hover:text-red-900 delete-btn p-1.5 rounded-lg hover:bg-red-100/60 transition-colors" title="Eliminar Ficha">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                                </button>
+                            </div>
+                        </td>`;
+
+                    if (dbTableBody) dbTableBody.appendChild(row);
+                });
+            }
 
             /**
              * Carga los datos de Firestore en la tabla de admin, aplicando filtros.
@@ -2327,59 +2854,19 @@
                     console.log(`Received snapshot. Empty: ${snapshot.empty}. Size: ${snapshot.size}`);
                     if (loadingDiv) loadingDiv.classList.add('hidden');
                     if (snapshot.empty) {
-                        if (noDataP) noDataP.classList.remove('hidden');
-                        if (dbTable) dbTable.classList.add('hidden');
-                        if (dbTableBody) dbTableBody.innerHTML = '';
+                        currentLoadedDocs = [];
+                        updateKpisAndRender([]);
                         return;
                     }
-                    if (dbTable) dbTable.classList.remove('hidden');
-                    if (noDataP) noDataP.classList.add('hidden');
-                    if (dbTableBody) dbTableBody.innerHTML = '';
 
                     // Ordenar por fecha de creación (los más nuevos primero)
-                    const docs = snapshot.docs.slice().sort((a, b) => {
+                    currentLoadedDocs = snapshot.docs.slice().sort((a, b) => {
                         const timeA = a.data().createdAt?.seconds || 0;
                         const timeB = b.data().createdAt?.seconds || 0;
                         return timeB - timeA;
                     });
 
-                    docs.forEach(docSnap => {
-                        const data = docSnap.data();
-                        const status = getHealthStatus(data);
-                        const row = document.createElement('tr');
-
-                        // Aplicar color de fondo según el estado
-                        if (status.name === 'Rojo') {
-                            row.className = 'bg-red-50 hover:bg-red-100 transition-colors';
-                        } else if (status.name === 'Amarillo') {
-                            row.className = 'bg-amber-50 hover:bg-amber-100 transition-colors';
-                        } else {
-                            row.className = 'hover:bg-slate-50 transition-colors';
-                        }
-
-                        row.dataset.docId = docSnap.id;
-
-                        // Generar HTML de la fila
-                        row.innerHTML = `
-                            <td class="px-6 py-4 whitespace-nowrap"><span class="status-dot" style="background-color: ${status.color};" title="${status.reason}"></span></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${data.student_name || ''}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${data.birth_date || ''}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">${data.group ? data.group.replace(/_/g, ' ') : ''}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${data.submission_date || ''}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center space-x-3">
-                                <button class="text-indigo-600 hover:text-indigo-900 view-btn p-1 rounded-md hover:bg-indigo-100" title="Ver Detalles">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
-                                </button>
-                                <button class="text-blue-600 hover:text-blue-900 edit-btn p-1 rounded-md hover:bg-blue-100" title="Editar">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
-                                </button>
-                                <button class="text-red-600 hover:text-red-900 delete-btn p-1 rounded-md hover:bg-red-100" title="Eliminar">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                                </button>
-                            </td>`;
-
-                        if (dbTableBody) dbTableBody.appendChild(row);
-                    });
+                    updateKpisAndRender(currentLoadedDocs);
                 }, (error) => {
                     console.error("Error fetching data:", error);
                     if (loadingDiv) loadingDiv.textContent = "Error al cargar los datos. Compruebe la consola para más detalles.";
@@ -2390,10 +2877,13 @@
                 });
             }
 
-            // --- Event Listeners Globales ---
+            // --- Event Listeners Globales de la Tabla y Búsqueda ---
+            if (studentSearchInput) {
+                studentSearchInput.addEventListener('input', () => {
+                    updateKpisAndRender(currentLoadedDocs);
+                });
+            }
 
-            // Delegación de eventos para los botones de la tabla
-            // ===== INICIO DE LA CORRECCIÓN =====
             if (dbTableBody) {
                 dbTableBody.addEventListener('click', (e) => {
                     const button = e.target.closest('button');
@@ -2407,13 +2897,16 @@
                         setupDeleteListener(docId);
                     } else if (button.classList.contains('view-btn')) {
                         showDetails(docId);
+                    } else if (button.classList.contains('download-pdf-btn')) {
+                        downloadStudentCard(docId);
+                    } else if (button.classList.contains('export-excel-btn')) {
+                        exportSingleStudentExcel(docId);
                     } else if (button.classList.contains('edit-btn')) {
                         loadDataIntoForm(docId);
                     }
                 });
             }
 
-            // Event listener para los botones de filtro de grupo
             if (groupFilterButtons) {
                 groupFilterButtons.addEventListener('click', (e) => {
                     if (e.target.tagName === 'BUTTON') {
@@ -2424,7 +2917,6 @@
                     }
                 });
             }
-            // ===== FIN DE LA CORRECCIÓN =====
 
             /**
              * Inicia la exportación de datos a Excel.
@@ -2595,6 +3087,14 @@
                             special_care: 'no',
                             special_care_text: '',
                             observations: 'Trae colirio en la mochila con autorización médica.',
+                            medical_reports: [
+                                {
+                                    name: 'informe_alergologia_mateo.pdf',
+                                    type: 'application/pdf',
+                                    size: 148500,
+                                    url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'
+                                }
+                            ],
                             authorization: 'authorize',
                             submission_date: new Date().toISOString().split('T')[0]
                         },
